@@ -100,22 +100,30 @@ label {
 
 #deckGrid {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .deckItem {
-  width: 100px;
-  height: 70px;
+  padding: 6px 10px;
   background: #222;
-  border-radius: 6px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  border-radius: 4px;
+  font-size: 11px;
   cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #333;
 }
+
 .deckItem:hover {
   background: #333;
+}
+
+.deckItem.active {
+  border-color: #4aa3ff;
 }
 
 /* Generic form styling tweaks */
