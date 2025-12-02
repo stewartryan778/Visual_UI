@@ -35,11 +35,22 @@
   </div>
 
   <!-- MEDIA DECK -->
-  <div id="deckPanel">
-    <h2>Media Deck</h2>
-    <input type="file" id="fileInput" multiple>
-    <div id="deckGrid"></div>
-  </div>
+<div id="deckPanel">
+  <h2>Media Deck</h2>
+
+  <!-- Video/Image file loader (already there) -->
+  <input type="file" id="fileInput" multiple>
+
+  <!-- ⭐ New audio loader ⭐ -->
+  <label style="margin-top:10px; display:block;">Load Audio File</label>
+  <input type="file" id="audioInput" accept="audio/*">
+
+  <!-- Audio player UI -->
+  <audio id="audioPlayer" controls style="width: 100%; margin-top: 8px;"></audio>
+
+  <div id="deckGrid"></div>
+</div>
+
 
 </div>
 
