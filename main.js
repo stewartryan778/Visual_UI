@@ -156,10 +156,12 @@ function getBands() {
 
 // ============= WEBGL VISUALS ===================
 
+// ============= WEBGL VISUALS ===================
+
 const canvas = document.getElementById("stage");
 const gl = canvas.getContext("webgl");
 
-// Resize canvas to fit wrapper
+// ⭐ ADD THIS WHOLE BLOCK RIGHT HERE ⭐
 function resizeCanvas() {
   const wrapper = document.getElementById("stageWrapper");
   const width = wrapper.clientWidth;
@@ -171,6 +173,12 @@ function resizeCanvas() {
     gl.viewport(0, 0, width, height);
   }
 }
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+// ⭐ END OF BLOCK ⭐
+
+// (Continue with shader creation below)
+
 
 
 
