@@ -161,9 +161,9 @@ const gl = canvas.getContext("webgl");
 
 // Resize canvas to fit wrapper
 function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  const width = rect.width;
-  const height = rect.height;
+  const wrapper = document.getElementById("stageWrapper");
+  const width = wrapper.clientWidth;
+  const height = wrapper.clientHeight;
 
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
@@ -171,6 +171,7 @@ function resizeCanvas() {
     gl.viewport(0, 0, width, height);
   }
 }
+
 
 
 
