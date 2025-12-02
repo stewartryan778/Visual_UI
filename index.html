@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Web VJ Engine</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -21,49 +21,56 @@
     <canvas id="stage"></canvas>
   </div>
 
-  <!-- RIGHT PANEL: FX / INSPECTOR -->
+  <!-- RIGHT PANEL: INSPECTOR -->
   <div id="inspectorPanel">
     <h2>Inspector</h2>
-
     <div id="inspectorContent">
       <p>No layer selected</p>
     </div>
 
     <h3>Global Controls</h3>
+    <label for="brightness">Brightness</label>
+    <input
+      type="range"
+      id="brightness"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.5"
+    />
 
-<label>Brightness</label>
-<input type="range" id="brightness" min="0" max="1" step="0.01" value="0.5">
-
-<label style="margin-top:10px; display:block;">Visual Mode</label>
-<select id="visualMode">
-  <option value="0">Radial Waves</option>
-  <option value="1">Kaleidoscope Grid</option>
-  <option value="2">Bass Orbitals</option>
-</select>
-
+    <label for="visualMode" style="margin-top: 10px; display: block;">
+      Visual Mode
+    </label>
+    <select id="visualMode">
+      <option value="0">Radial Waves</option>
+      <option value="1">Kaleidoscope Grid</option>
+      <option value="2">Bass Orbitals</option>
+    </select>
   </div>
 
-  <!-- MEDIA DECK -->
-<div id="deckPanel">
-  <h2>Media Deck</h2>
+  <!-- BOTTOM PANEL: MEDIA DECK -->
+  <div id="deckPanel">
+    <h2>Media Deck</h2>
 
-  <!-- Video/Image file loader (already there) -->
-  <input type="file" id="fileInput" multiple>
+    <!-- (future) visuals / video/images -->
+    <input type="file" id="fileInput" multiple />
 
-  <!-- ⭐ New audio loader ⭐ -->
-  <label style="margin-top:10px; display:block;">Load Audio File</label>
-  <input type="file" id="audioInput" accept="audio/*">
+    <!-- AUDIO FILE INPUT -->
+    <label style="margin-top: 10px; display: block;">Load Audio File</label>
+    <input type="file" id="audioInput" accept="audio/*" />
 
-  <!-- Audio player UI -->
-  <audio id="audioPlayer" controls style="width: 100%; margin-top: 8px;"></audio>
+    <audio
+      id="audioPlayer"
+      controls
+      style="width: 100%; margin-top: 8px;"
+    ></audio>
 
-  <div id="deckGrid"></div>
-</div>
-
+    <div id="deckGrid"></div>
+  </div>
 
 </div>
 
 <script src="main.js"></script>
 </body>
 </html>
-
