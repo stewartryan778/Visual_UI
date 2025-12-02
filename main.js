@@ -126,6 +126,12 @@ audioInput.addEventListener("change", function() {
   analyser.connect(audioContext.destination); // allows hearing audio
 });
 
+window.addEventListener("click", () => {
+  if (audioContext.state !== "running") {
+    audioContext.resume();
+  }
+});
+
 
 function getBands() {
   analyser.getByteFrequencyData(freqData);
