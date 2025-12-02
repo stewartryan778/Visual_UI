@@ -1,0 +1,104 @@
+body {
+  margin: 0;
+  background: #111;
+  font-family: Arial, sans-serif;
+  color: #eee;
+}
+
+#layout {
+  display: grid;
+  grid-template-columns: 260px auto 300px;
+  grid-template-rows: auto 230px;
+  height: 100vh;
+}
+
+/* LEFT: LAYERS */
+#layersPanel {
+  grid-row: span 1;
+  background: #181818;
+  padding: 15px;
+  border-right: 2px solid #222;
+  overflow-y: auto;
+}
+
+.layer {
+  padding: 10px;
+  background: #222;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.layer.active {
+  outline: 2px solid #4aa3ff;
+}
+
+.layer-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.layer-controls button {
+  background: #333;
+  border: none;
+  color: #eee;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.layer-controls button:hover {
+  background: #444;
+}
+
+/* CENTER: STAGE */
+#stageWrapper {
+  position: relative;
+  background: #000;
+  border-left: 2px solid #222;
+  border-right: 2px solid #222;
+}
+
+#stage {
+  width: 100%;
+  height: 100%;
+}
+
+/* RIGHT: INSPECTOR */
+#inspectorPanel {
+  background: #181818;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+#inspectorPanel input[type=range] {
+  width: 100%;
+}
+
+/* BOTTOM: MEDIA DECK */
+#deckPanel {
+  grid-column: span 3;
+  background: #131313;
+  padding: 15px;
+  border-top: 2px solid #222;
+  overflow-x: auto;
+}
+
+#deckGrid {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.deckItem {
+  width: 100px;
+  height: 70px;
+  background: #222;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+.deckItem:hover {
+  background: #333;
+}
