@@ -28,6 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const logoTextInput = document.getElementById("logoTextInput");
   const logoVisibleCheckbox = document.getElementById("logoVisible");
+  const logoSizeSlider = document.getElementById("logoSize");
   const logoTextDisplay = document.getElementById("logoTextDisplay");
   const overlayHud = document.getElementById("overlayHud");
 
@@ -59,13 +60,22 @@ window.addEventListener("DOMContentLoaded", () => {
     cameraRotateDeg = parseFloat(cameraRotateSlider.value || "0");
   });
 
-  // Logo controls
+  // Logo state (including size)
+  let logoSize = parseFloat(logoSizeSlider.value || "18");
+
   function updateLogoDisplay() {
     logoTextDisplay.textContent = logoTextInput.value || "";
     overlayHud.style.display = logoVisibleCheckbox.checked ? "block" : "none";
+    logoTextDisplay.style.fontSize = logoSize + "px";
   }
+
   logoTextInput.addEventListener("input", updateLogoDisplay);
   logoVisibleCheckbox.addEventListener("change", updateLogoDisplay);
+  logoSizeSlider.addEventListener("input", () => {
+    logoSize = parseFloat(logoSizeSlider.value || "18");
+    updateLogoDisplay();
+  });
+
   updateLogoDisplay();
 
   // Presets storage
@@ -108,6 +118,7 @@ window.addEventListener("DOMContentLoaded", () => {
       cameraRotateDeg,
       logoText: logoTextInput.value || "",
       logoVisible: !!logoVisibleCheckbox.checked,
+      logoSize: logoSize,
       layers: layers.map(l => ({
         enabled: l.enabled,
         opacity: l.opacity,
@@ -129,6 +140,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     logoTextInput.value = preset.logoText ?? "";
     logoVisibleCheckbox.checked = !!preset.logoVisible;
+    logoSize = preset.logoSize ?? 18;
+    logoSizeSlider.value = String(logoSize);
     updateLogoDisplay();
 
     layers = [];
@@ -265,27 +278,31 @@ window.addEventListener("DOMContentLoaded", () => {
         value="${layer.opacity}"
       />
 
-      <label style="margin-top:10px;">Visual Mode</label>
-      <select id="layerVisualMode">
-        <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
-        <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope</option>
-        <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
-      </select>
+      <details id="effectsPanel" style="margin-top:10px;" open>
+        <summary>Effects</summary>
 
-      <label style="margin-top:10px;">Color Theme</label>
-      <select id="layerColorTheme">
-        <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
-        <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
-        <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
-      </select>
+        <label style="margin-top:6px;">Visual Mode</label>
+        <select id="layerVisualMode">
+          <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
+          <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope</option>
+          <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
+        </select>
 
-      <label style="margin-top:10px;">Blend Mode</label>
-      <select id="layerBlendMode">
-        <option value="normal" ${layer.blend === "normal" ? "selected" : ""}>Normal</option>
-        <option value="add" ${layer.blend === "add" ? "selected" : ""}>Add</option>
-        <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
-        <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
-      </select>
+        <label style="margin-top:6px;">Color Theme</label>
+        <select id="layerColorTheme">
+          <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
+          <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
+          <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
+        </select>
+
+        <label style="margin-top:6px;">Blend Mode</label>
+        <select id="layerBlendMode">
+          <option value="normal" ${layer.blend === "normal" ? "selected" : ""}>Normal</option>
+          <option value="add" ${layer.blend === "add" ? "selected" : ""}>Add</option>
+          <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
+          <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
+        </select>
+      </details>
     `;
 
     const opacitySlider = document.getElementById("layerOpacity");
