@@ -172,8 +172,7 @@ function resizeCanvas() {
   }
 }
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+
 
 // Vertex shader
 const vertSrc = `
