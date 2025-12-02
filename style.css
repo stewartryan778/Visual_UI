@@ -3,12 +3,13 @@ body {
   background: #111;
   font-family: Arial, sans-serif;
   color: #eee;
+  overflow: hidden;
 }
 
 #layout {
   display: grid;
   grid-template-columns: 260px auto 300px;
-  grid-template-rows: auto 230px;
+  grid-template-rows: 1fr 230px;
   height: 100vh;
 }
 
