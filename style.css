@@ -3,26 +3,23 @@ body {
   background: #111;
   font-family: Arial, sans-serif;
   color: #eee;
-  overflow: hidden;
+  overflow: hidden; /* prevent page scrolling */
 }
 
 #layout {
   display: grid;
-  grid-template-columns: 260px auto 300px;
-  grid-template-rows: 1fr 230px;
-  height: 100vh;
+  grid-template-columns: 260px 1fr 300px;
+  grid-template-rows: 1fr 230px; /* top fills, bottom fixed */
+  height: 100vh; /* lock to viewport height */
 }
 
-/* LEFT: LAYERS */
+/* LEFT: LAYERS PANEL */
 #layersPanel {
-  grid-row: span 1;
   background: #181818;
   padding: 15px;
   border-right: 2px solid #222;
   overflow-y: auto;
-}
-#inspectorPanel {
-  min-height: 0;   /* allow them to shrink inside the grid row */
+  min-height: 0; /* important so grid row can shrink */
 }
 
 .layer {
@@ -49,42 +46,52 @@ body {
   color: #eee;
   padding: 4px 6px;
   cursor: pointer;
+  font-size: 11px;
 }
 .layer-controls button:hover {
   background: #444;
 }
 
-/* CENTER: STAGE */
+/* CENTER: STAGE WRAPPER + CANVAS */
 #stageWrapper {
   position: relative;
   background: #000;
   border-left: 2px solid #222;
   border-right: 2px solid #222;
-  overflow: hidden;   /* ⬅ keep canvas from expanding the grid */
-  min-height: 0;      /* ⬅ allow row to be 1fr without growing */
+  overflow: hidden; /* prevent canvas from pushing layout */
+  min-height: 0;    /* allow shrinking inside 1fr row */
 }
-
 
 #stage {
   width: 100%;
   height: 100%;
-  display: block;
+  display: block; /* remove inline-gap */
 }
 
-/* RIGHT: INSPECTOR */
+/* RIGHT: INSPECTOR PANEL */
 #inspectorPanel {
   background: #181818;
   padding: 15px;
   overflow-y: auto;
+  min-height: 0; /* grid-friendly */
 }
 
-#inspectorPanel input[type=range] {
+#inspectorPanel input[type="range"],
+#inspectorPanel select {
   width: 100%;
+}
+
+h2, h3 {
+  margin: 0 0 10px 0;
+}
+
+label {
+  font-size: 12px;
 }
 
 /* BOTTOM: MEDIA DECK */
 #deckPanel {
-  grid-column: span 3;
+  grid-column: 1 / span 3;
   background: #131313;
   padding: 15px;
   border-top: 2px solid #222;
@@ -109,4 +116,13 @@ body {
 }
 .deckItem:hover {
   background: #333;
+}
+
+/* Generic form styling tweaks */
+input[type="file"] {
+  font-size: 11px;
+}
+
+audio {
+  background: #111;
 }
