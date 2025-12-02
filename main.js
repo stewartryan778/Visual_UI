@@ -1,4 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
+  console.log(">>> main.js loaded");
+
   // ================== LAYER SYSTEM =====================
 
   let layers = [];
@@ -8,8 +10,8 @@ window.addEventListener("DOMContentLoaded", () => {
     constructor() {
       this.enabled = true;
       this.opacity = 1.0;
-      this.blend = "normal";
-      this.source = null;
+      this.blend = "normal"; // normal | add | screen | multiply
+      this.source = null;    // future video/image
       this.type = "shader";
       this.visualMode = 0;   // 0,1,2
       this.colorTheme = 0;   // 0=cool,1=warm,2=neon
@@ -21,18 +23,174 @@ window.addEventListener("DOMContentLoaded", () => {
   const inspectorContent = document.getElementById("inspectorContent");
   const brightnessControl = document.getElementById("brightness");
 
-  // safety checks (avoid null errors)
-  if (!layerContainer || !addLayerBtn || !inspectorContent || !brightnessControl) {
-    console.error("One or more required DOM elements are missing. Check IDs in index.html.");
+  const cameraZoomSlider = document.getElementById("cameraZoom");
+  const cameraRotateSlider = document.getElementById("cameraRotate");
+
+  const logoTextInput = document.getElementById("logoTextInput");
+  const logoVisibleCheckbox = document.getElementById("logoVisible");
+  const logoTextDisplay = document.getElementById("logoTextDisplay");
+  const overlayHud = document.getElementById("overlayHud");
+
+  const presetNameInput = document.getElementById("presetName");
+  const presetSelect = document.getElementById("presetSelect");
+  const savePresetBtn = document.getElementById("savePresetBtn");
+  const loadPresetBtn = document.getElementById("loadPresetBtn");
+  const deletePresetBtn = document.getElementById("deletePresetBtn");
+
+  if (
+    !layerContainer ||
+    !addLayerBtn ||
+    !inspectorContent ||
+    !brightnessControl
+  ) {
+    console.error("Missing key DOM elements. Check IDs in index.html.");
     return;
   }
 
-  // initial layer
-  addLayer(new Layer());
+  // Global camera state
+  let cameraZoom = parseFloat(cameraZoomSlider.value || "1");
+  let cameraRotateDeg = parseFloat(cameraRotateSlider.value || "0");
 
-  addLayerBtn.addEventListener("click", () => {
-    addLayer(new Layer());
+  cameraZoomSlider.addEventListener("input", () => {
+    cameraZoom = parseFloat(cameraZoomSlider.value || "1");
   });
+
+  cameraRotateSlider.addEventListener("input", () => {
+    cameraRotateDeg = parseFloat(cameraRotateSlider.value || "0");
+  });
+
+  // Logo controls
+  function updateLogoDisplay() {
+    logoTextDisplay.textContent = logoTextInput.value || "";
+    overlayHud.style.display = logoVisibleCheckbox.checked ? "block" : "none";
+  }
+  logoTextInput.addEventListener("input", updateLogoDisplay);
+  logoVisibleCheckbox.addEventListener("change", updateLogoDisplay);
+  updateLogoDisplay();
+
+  // Presets storage
+  let presets = [];
+
+  function loadPresetsFromStorage() {
+    try {
+      const raw = localStorage.getItem("vj_presets_v1");
+      if (!raw) return;
+      presets = JSON.parse(raw) || [];
+      refreshPresetSelect();
+    } catch (e) {
+      console.error("Failed to load presets", e);
+    }
+  }
+
+  function savePresetsToStorage() {
+    try {
+      localStorage.setItem("vj_presets_v1", JSON.stringify(presets));
+    } catch (e) {
+      console.error("Failed to save presets", e);
+    }
+  }
+
+  function refreshPresetSelect() {
+    presetSelect.innerHTML = '<option value="">-- Select preset --</option>';
+    presets.forEach((p, idx) => {
+      const opt = document.createElement("option");
+      opt.value = String(idx);
+      opt.textContent = p.name;
+      presetSelect.appendChild(opt);
+    });
+  }
+
+  function captureCurrentPreset(name) {
+    return {
+      name,
+      brightness: parseFloat(brightnessControl.value || "0.5"),
+      cameraZoom,
+      cameraRotateDeg,
+      logoText: logoTextInput.value || "",
+      logoVisible: !!logoVisibleCheckbox.checked,
+      layers: layers.map(l => ({
+        enabled: l.enabled,
+        opacity: l.opacity,
+        blend: l.blend,
+        visualMode: l.visualMode,
+        colorTheme: l.colorTheme
+      }))
+    };
+  }
+
+  function applyPreset(preset) {
+    if (!preset) return;
+
+    brightnessControl.value = String(preset.brightness ?? 0.5);
+    cameraZoom = preset.cameraZoom ?? 1;
+    cameraRotateDeg = preset.cameraRotateDeg ?? 0;
+    cameraZoomSlider.value = String(cameraZoom);
+    cameraRotateSlider.value = String(cameraRotateDeg);
+
+    logoTextInput.value = preset.logoText ?? "";
+    logoVisibleCheckbox.checked = !!preset.logoVisible;
+    updateLogoDisplay();
+
+    layers = [];
+    (preset.layers || []).forEach(pl => {
+      const l = new Layer();
+      l.enabled = pl.enabled ?? true;
+      l.opacity = pl.opacity ?? 1;
+      l.blend = pl.blend ?? "normal";
+      l.visualMode = pl.visualMode ?? 0;
+      l.colorTheme = pl.colorTheme ?? 0;
+      layers.push(l);
+    });
+
+    if (layers.length === 0) {
+      layers.push(new Layer());
+    }
+    selectedLayer = 0;
+    updateLayerUI();
+    updateInspector();
+  }
+
+  savePresetBtn.addEventListener("click", () => {
+    const name = (presetNameInput.value || "").trim();
+    if (!name) {
+      alert("Enter a preset name.");
+      return;
+    }
+    const existingIndex = presets.findIndex(p => p.name === name);
+    const presetData = captureCurrentPreset(name);
+    if (existingIndex >= 0) {
+      presets[existingIndex] = presetData;
+    } else {
+      presets.push(presetData);
+    }
+    savePresetsToStorage();
+    refreshPresetSelect();
+    presetNameInput.value = "";
+  });
+
+  loadPresetBtn.addEventListener("click", () => {
+    const idx = parseInt(presetSelect.value, 10);
+    if (isNaN(idx) || !presets[idx]) {
+      alert("Select a preset to load.");
+      return;
+    }
+    applyPreset(presets[idx]);
+  });
+
+  deletePresetBtn.addEventListener("click", () => {
+    const idx = parseInt(presetSelect.value, 10);
+    if (isNaN(idx) || !presets[idx]) {
+      alert("Select a preset to delete.");
+      return;
+    }
+    presets.splice(idx, 1);
+    savePresetsToStorage();
+    refreshPresetSelect();
+  });
+
+  loadPresetsFromStorage();
+
+  // ----- Layer UI -----
 
   function addLayer(layer) {
     layers.push(layer);
@@ -40,6 +198,12 @@ window.addEventListener("DOMContentLoaded", () => {
     updateLayerUI();
     updateInspector();
   }
+
+  addLayer(new Layer());
+
+  addLayerBtn.addEventListener("click", () => {
+    addLayer(new Layer());
+  });
 
   function updateLayerUI() {
     layerContainer.innerHTML = "";
@@ -114,11 +278,20 @@ window.addEventListener("DOMContentLoaded", () => {
         <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
         <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
       </select>
+
+      <label style="margin-top:10px;">Blend Mode</label>
+      <select id="layerBlendMode">
+        <option value="normal" ${layer.blend === "normal" ? "selected" : ""}>Normal</option>
+        <option value="add" ${layer.blend === "add" ? "selected" : ""}>Add</option>
+        <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
+        <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
+      </select>
     `;
 
     const opacitySlider = document.getElementById("layerOpacity");
     const modeSelect = document.getElementById("layerVisualMode");
     const themeSelect = document.getElementById("layerColorTheme");
+    const blendSelect = document.getElementById("layerBlendMode");
 
     opacitySlider.addEventListener("input", e => {
       layer.opacity = parseFloat(e.target.value);
@@ -130,6 +303,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     themeSelect.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
+    });
+
+    blendSelect.addEventListener("change", e => {
+      layer.blend = e.target.value;
     });
   }
 
@@ -149,7 +326,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentTrackIndex = -1;
 
   if (!audioInput || !audioPlayer || !deckGrid) {
-    console.error("Audio elements missing. Check audioInput/audioPlayer/deckGrid IDs.");
+    console.error("Audio elements missing.");
     return;
   }
 
@@ -267,6 +444,8 @@ window.addEventListener("DOMContentLoaded", () => {
     uniform float u_opacity;
     uniform float u_mode;
     uniform float u_theme;
+    uniform float u_zoom;
+    uniform float u_rotate; // radians
 
     vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b * cos(6.28318 * (c * t + d));
@@ -275,6 +454,12 @@ window.addEventListener("DOMContentLoaded", () => {
     void main() {
       vec2 uv = gl_FragCoord.xy / u_resolution.xy;
       vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
+
+      p *= u_zoom;
+      float ca = cos(u_rotate);
+      float sa = sin(u_rotate);
+      p = mat2(ca, -sa, sa, ca) * p;
+
       float r = length(p);
       float ang = atan(p.y, p.x);
       float t = u_time;
@@ -381,11 +566,30 @@ window.addEventListener("DOMContentLoaded", () => {
   const uOpacityLoc = gl.getUniformLocation(program, "u_opacity");
   const uModeLoc = gl.getUniformLocation(program, "u_mode");
   const uThemeLoc = gl.getUniformLocation(program, "u_theme");
+  const uZoomLoc = gl.getUniformLocation(program, "u_zoom");
+  const uRotateLoc = gl.getUniformLocation(program, "u_rotate");
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   let startTime = performance.now();
+
+  function setBlendMode(blend) {
+    switch (blend) {
+      case "add":
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+        break;
+      case "screen":
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_COLOR);
+        break;
+      case "multiply":
+        gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
+        break;
+      default:
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        break;
+    }
+  }
 
   function render() {
     resizeCanvas();
@@ -399,8 +603,13 @@ window.addEventListener("DOMContentLoaded", () => {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    const zoom = cameraZoom;
+    const rotateRad = (cameraRotateDeg * Math.PI) / 180.0;
+
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
+
+      setBlendMode(layer.blend);
 
       gl.uniform1f(uTimeLoc, t);
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
@@ -411,6 +620,8 @@ window.addEventListener("DOMContentLoaded", () => {
       gl.uniform1f(uOpacityLoc, layer.opacity);
       gl.uniform1f(uModeLoc, layer.visualMode);
       gl.uniform1f(uThemeLoc, layer.colorTheme);
+      gl.uniform1f(uZoomLoc, zoom);
+      gl.uniform1f(uRotateLoc, rotateRad);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
