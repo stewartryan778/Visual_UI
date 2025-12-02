@@ -7,9 +7,11 @@ class Layer {
   constructor() {
     this.enabled = true;
     this.opacity = 1.0;
-    this.blend = "normal"; // for future use
+    this.blend = "normal"; // for future blending control
     this.source = null;    // for future (video/image)
     this.type = "shader";  // shader | video | image
+    this.visualMode = 0;   // 0,1,2
+    this.colorTheme = 0;   // 0=cool,1=warm,2=neon
   }
 }
 
@@ -17,12 +19,6 @@ const layerContainer = document.getElementById("layerContainer");
 const addLayerBtn = document.getElementById("addLayerBtn");
 const inspectorContent = document.getElementById("inspectorContent");
 const brightnessControl = document.getElementById("brightness");
-const visualModeSelect = document.getElementById("visualMode");
-
-let visualMode = 0;
-visualModeSelect.addEventListener("change", e => {
-  visualMode = parseInt(e.target.value, 10);
-});
 
 // Add initial layer
 addLayer(new Layer());
@@ -88,6 +84,7 @@ function updateInspector() {
 
   inspectorContent.innerHTML = `
     <h3>Layer ${selectedLayer + 1}</h3>
+
     <label>Opacity</label>
     <input
       type="range"
@@ -97,15 +94,40 @@ function updateInspector() {
       step="0.01"
       value="${layer.opacity}"
     />
+
+    <label style="margin-top:10px;">Visual Mode</label>
+    <select id="layerVisualMode">
+      <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
+      <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope Grid</option>
+      <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Bass Orbitals</option>
+    </select>
+
+    <label style="margin-top:10px;">Color Theme</label>
+    <select id="layerColorTheme">
+      <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
+      <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
+      <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
+    </select>
   `;
 
   const opacitySlider = document.getElementById("layerOpacity");
+  const modeSelect = document.getElementById("layerVisualMode");
+  const themeSelect = document.getElementById("layerColorTheme");
+
   opacitySlider.addEventListener("input", e => {
     layer.opacity = parseFloat(e.target.value);
   });
+
+  modeSelect.addEventListener("change", e => {
+    layer.visualMode = parseInt(e.target.value, 10);
+  });
+
+  themeSelect.addEventListener("change", e => {
+    layer.colorTheme = parseInt(e.target.value, 10);
+  });
 }
 
-// ================== AUDIO FROM FILE =====================
+// ================== AUDIO: FILE + PLAYLIST =====================
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const analyser = audioContext.createAnalyser();
@@ -114,10 +136,13 @@ const freqData = new Uint8Array(analyser.frequencyBinCount);
 
 const audioInput = document.getElementById("audioInput");
 const audioPlayer = document.getElementById("audioPlayer");
+const deckGrid = document.getElementById("deckGrid");
 
 let audioSource = null;
+let tracks = [];
+let currentTrackIndex = -1;
 
-// Some browsers require a user gesture to start/resume AudioContext
+// required on some browsers
 window.addEventListener("click", () => {
   if (audioContext.state !== "running") {
     audioContext.resume();
@@ -125,23 +150,53 @@ window.addEventListener("click", () => {
 });
 
 audioInput.addEventListener("change", function () {
-  const file = this.files[0];
-  if (!file) return;
+  const files = Array.from(this.files || []);
+  tracks = files.map((file, i) => ({
+    file,
+    name: file.name,
+    url: URL.createObjectURL(file),
+  }));
 
-  const url = URL.createObjectURL(file);
+  renderPlaylist();
 
-  audioPlayer.src = url;
+  if (tracks.length > 0) {
+    playTrack(0);
+  }
+});
+
+function renderPlaylist() {
+  deckGrid.innerHTML = "";
+  tracks.forEach((track, index) => {
+    const div = document.createElement("div");
+    div.className = "deckItem";
+    if (index === currentTrackIndex) {
+      div.classList.add("active");
+    }
+    div.textContent = track.name;
+    div.addEventListener("click", () => playTrack(index));
+    deckGrid.appendChild(div);
+  });
+}
+
+function playTrack(index) {
+  if (!tracks[index]) return;
+  currentTrackIndex = index;
+
+  // update UI highlight
+  renderPlaylist();
+
+  const track = tracks[index];
+  audioPlayer.src = track.url;
   audioPlayer.load();
   audioPlayer.play();
 
   // Disconnect previous audio source if needed
   if (audioSource) audioSource.disconnect();
 
-  // Connect <audio> element into Web Audio graph
   audioSource = audioContext.createMediaElementSource(audioPlayer);
   audioSource.connect(analyser);
-  analyser.connect(audioContext.destination); // so we can hear it
-});
+  analyser.connect(audioContext.destination);
+}
 
 function getBands() {
   analyser.getByteFrequencyData(freqData);
@@ -192,7 +247,7 @@ const vertSrc = `
   }
 `;
 
-// Fragment shader with 3 visual modes
+// Fragment shader with 3 modes + color themes
 const fragSrc = `
   precision mediump float;
   uniform float u_time;
@@ -202,7 +257,8 @@ const fragSrc = `
   uniform float u_high;
   uniform float u_brightness;
   uniform float u_opacity;
-  uniform float u_mode;   // 0 = radial, 1 = kaleido, 2 = orbitals
+  uniform float u_mode;    // 0,1,2
+  uniform float u_theme;   // 0=cool,1=warm,2=neon
 
   // smooth color palette helper
   vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
@@ -218,6 +274,32 @@ const fragSrc = `
     float t = u_time;
     vec3 color = vec3(0.0);
 
+    // choose base palette by theme
+    vec3 A;
+    vec3 B;
+    vec3 C;
+    vec3 D;
+
+    if (u_theme < 0.5) {
+      // cool
+      A = vec3(0.15, 0.18, 0.25);
+      B = vec3(0.5, 0.5, 0.7);
+      C = vec3(0.3, 0.4, 0.6);
+      D = vec3(0.0, 0.3, 0.7);
+    } else if (u_theme < 1.5) {
+      // warm
+      A = vec3(0.18, 0.14, 0.12);
+      B = vec3(0.8, 0.5, 0.3);
+      C = vec3(0.4, 0.3, 0.2);
+      D = vec3(0.1, 0.25, 0.3);
+    } else {
+      // neon
+      A = vec3(0.05, 0.05, 0.09);
+      B = vec3(0.9, 0.8, 1.0);
+      C = vec3(0.6, 0.4, 0.8);
+      D = vec3(0.1, 0.4, 0.8);
+    }
+
     // --- Mode 0: Radial Waves ---
     if (u_mode < 0.5) {
       float wave = sin(12.0 * radius - t * (2.0 + u_bass * 6.0));
@@ -231,10 +313,7 @@ const fragSrc = `
 
       color = palette(
         base + u_bass * 0.5,
-        vec3(0.2, 0.2, 0.25),
-        vec3(0.6, 0.5, 0.7),
-        vec3(0.3, 0.2, 0.4),
-        vec3(0.0, 0.35, 0.7)
+        A, B, C, D
       );
 
       color *= 0.6 + 0.4 * mixVal;
@@ -254,10 +333,7 @@ const fragSrc = `
 
       vec3 baseCol = palette(
         t * 0.2 + u_mid,
-        vec3(0.12, 0.12, 0.14),
-        vec3(0.8, 0.5, 0.3),
-        vec3(0.25, 0.2, 0.4),
-        vec3(0.0, 0.33, 0.7)
+        A, B, C, D
       );
 
       color = baseCol;
@@ -285,10 +361,7 @@ const fragSrc = `
 
       vec3 baseCol = palette(
         u_bass * 0.8 + t * 0.1,
-        vec3(0.05, 0.08, 0.12),
-        vec3(0.7, 0.9, 0.8),
-        vec3(0.3, 0.4, 0.5),
-        vec3(0.0, 0.3, 0.6)
+        A, B, C, D
       );
 
       color = baseCol;
@@ -355,8 +428,9 @@ const uHighLoc = gl.getUniformLocation(program, "u_high");
 const uBrightLoc = gl.getUniformLocation(program, "u_brightness");
 const uOpacityLoc = gl.getUniformLocation(program, "u_opacity");
 const uModeLoc = gl.getUniformLocation(program, "u_mode");
+const uThemeLoc = gl.getUniformLocation(program, "u_theme");
 
-// Enable blending (future multi-layer)
+// Enable blending for multiple layers
 gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -371,27 +445,27 @@ function render() {
   const t = (now - startTime) * 0.001;
 
   const { bass, mid, high } = getBands();
-  const brightness = parseFloat(brightnessControl.value);
+  const brightness = parseFloat(brightnessControl.value || "0.5");
 
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Currently we just use Layer 0 as the main shader layer
-  let opacity = 0.0;
-  if (layers.length > 0 && layers[0].enabled) {
-    opacity = layers[0].opacity;
-  }
+  // Draw each enabled layer, stacked
+  layers.forEach(layer => {
+    if (!layer.enabled || layer.opacity <= 0) return;
 
-  gl.uniform1f(uTimeLoc, t);
-  gl.uniform2f(uResLoc, canvas.width, canvas.height);
-  gl.uniform1f(uBassLoc, bass);
-  gl.uniform1f(uMidLoc, mid);
-  gl.uniform1f(uHighLoc, high);
-  gl.uniform1f(uBrightLoc, brightness);
-  gl.uniform1f(uOpacityLoc, opacity);
-  gl.uniform1f(uModeLoc, visualMode);
+    gl.uniform1f(uTimeLoc, t);
+    gl.uniform2f(uResLoc, canvas.width, canvas.height);
+    gl.uniform1f(uBassLoc, bass);
+    gl.uniform1f(uMidLoc, mid);
+    gl.uniform1f(uHighLoc, high);
+    gl.uniform1f(uBrightLoc, brightness);
+    gl.uniform1f(uOpacityLoc, layer.opacity);
+    gl.uniform1f(uModeLoc, layer.visualMode);
+    gl.uniform1f(uThemeLoc, layer.colorTheme);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  });
 
   requestAnimationFrame(render);
 }
