@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Web VJ Engine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="layout">
+
+  <!-- LEFT PANEL: LAYERS -->
+  <div id="layersPanel">
+    <h2>Layers</h2>
+    <div id="layerContainer"></div>
+    <button id="addLayerBtn">+ Add Layer</button>
+  </div>
+
+  <!-- CENTER: STAGE -->
+  <div id="stageWrapper">
+    <canvas id="stage"></canvas>
+  </div>
+
+  <!-- RIGHT PANEL: FX / INSPECTOR -->
+  <div id="inspectorPanel">
+    <h2>Inspector</h2>
+
+    <div id="inspectorContent">
+      <p>No layer selected</p>
+    </div>
+
+    <h3>Global Controls</h3>
+    <label>Brightness</label>
+    <input type="range" id="brightness" min="0" max="1" step="0.01" value="0.5">
+  </div>
+
+  <!-- MEDIA DECK -->
+  <div id="deckPanel">
+    <h2>Media Deck</h2>
+    <input type="file" id="fileInput" multiple>
+    <div id="deckGrid"></div>
+  </div>
+
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
+
