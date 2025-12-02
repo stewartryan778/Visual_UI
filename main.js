@@ -100,14 +100,32 @@ analyser.fftSize = 1024;
 const freqData = new Uint8Array(analyser.frequencyBinCount);
 
 // ask for microphone access
-navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  .then(stream => {
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
-  })
-  .catch(err => {
-    console.error("Mic error:", err);
-  });
+// ========= AUDIO FROM FILE INSTEAD OF MIC ============
+
+const audioInput = document.getElementById("audioInput");
+const audioPlayer = document.getElementById("audioPlayer");
+
+let audioSource = null;
+
+audioInput.addEventListener("change", function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+
+  audioPlayer.src = url;
+  audioPlayer.load();
+  audioPlayer.play();
+
+  // Disconnect previous audio source if needed
+  if (audioSource) audioSource.disconnect();
+
+  // Connect the <audio> element to the audio graph
+  audioSource = audioContext.createMediaElementSource(audioPlayer);
+  audioSource.connect(analyser);
+  analyser.connect(audioContext.destination); // allows hearing audio
+});
+
 
 function getBands() {
   analyser.getByteFrequencyData(freqData);
