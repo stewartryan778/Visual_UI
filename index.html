@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Web VJ Engine</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -19,6 +19,11 @@
   <!-- CENTER: STAGE -->
   <div id="stageWrapper">
     <canvas id="stage"></canvas>
+
+    <!-- LOGO / TEXT OVERLAY -->
+    <div id="overlayHud">
+      <span id="logoTextDisplay">Your Logo</span>
+    </div>
   </div>
 
   <!-- RIGHT PANEL: INSPECTOR -->
@@ -38,6 +43,48 @@
       step="0.01"
       value="0.5"
     />
+
+    <h3>Camera</h3>
+    <label for="cameraZoom">Zoom</label>
+    <input
+      type="range"
+      id="cameraZoom"
+      min="0.3"
+      max="2"
+      step="0.01"
+      value="1"
+    />
+
+    <label for="cameraRotate" style="margin-top:6px;">Rotation (°)</label>
+    <input
+      type="range"
+      id="cameraRotate"
+      min="-180"
+      max="180"
+      step="1"
+      value="0"
+    />
+
+    <h3>Logo / Text Overlay</h3>
+    <label for="logoTextInput">Logo Text</label>
+    <input type="text" id="logoTextInput" value="Your Logo" />
+    <label style="margin-top:6px; display:block;">
+      <input type="checkbox" id="logoVisible" checked />
+      Show Logo
+    </label>
+
+    <h3>Presets</h3>
+    <div id="presetControls">
+      <input type="text" id="presetName" placeholder="Preset name" />
+      <button id="savePresetBtn">Save</button>
+    </div>
+    <select id="presetSelect">
+      <option value="">-- Select preset --</option>
+    </select>
+    <div style="margin-top:6px;">
+      <button id="loadPresetBtn">Load</button>
+      <button id="deletePresetBtn">Delete</button>
+    </div>
   </div>
 
   <!-- BOTTOM PANEL: MEDIA DECK -->
