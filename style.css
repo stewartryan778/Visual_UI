@@ -11,7 +11,27 @@ body {
   display: grid;
   grid-template-columns: 250px 1fr 280px;
   grid-template-rows: 1fr 220px;
+  grid-template-areas:
+    "layers stage media"
+    "effects effects effects";
   height: 100vh;
+}
+
+/* Explicit grid areas */
+#layersPanel {
+  grid-area: layers;
+}
+
+#stageWrapper {
+  grid-area: stage;
+}
+
+#deckPanel {
+  grid-area: media;
+}
+
+#inspectorPanel {
+  grid-area: effects;
 }
 
 /* === LEFT: LAYERS PANEL === */
@@ -63,8 +83,6 @@ body {
 
 /* === CENTER: STAGE === */
 #stageWrapper {
-  grid-column: 2;
-  grid-row: 1;
   position: relative;
   background: #000;
   border-left: 2px solid #222;
@@ -99,8 +117,6 @@ body {
 
 /* === RIGHT: MEDIA / MUSIC PANEL === */
 #deckPanel {
-  grid-column: 3;
-  grid-row: 1;
   background: #181818;
   padding: 12px;
   border-left: 2px solid #222;
@@ -143,8 +159,6 @@ body {
 
 /* === BOTTOM: INSPECTOR / EFFECTS PANEL === */
 #inspectorPanel {
-  grid-column: 1 / span 3;
-  grid-row: 2;
   background: #181818;
   padding: 12px;
   overflow-y: auto;
