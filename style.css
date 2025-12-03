@@ -1,23 +1,24 @@
+/* BASIC PAGE STYLING */
 body {
   margin: 0;
-  background: #111;
+  background: #090909;
   font-family: Arial, sans-serif;
   color: #eee;
-  overflow: hidden; /* prevent page scrolling */
+  overflow: hidden;
 }
 
-/* === GRID LAYOUT === */
+/* MAIN GRID */
 #layout {
   display: grid;
-  grid-template-columns: 250px 1fr 280px;
-  grid-template-rows: 1fr 220px;
+  grid-template-columns: 240px 1fr 280px;
+  grid-template-rows: 1fr 260px;
   grid-template-areas:
     "layers stage media"
     "effects effects effects";
   height: 100vh;
 }
 
-/* Explicit grid areas */
+/* GRID AREAS */
 #layersPanel {
   grid-area: layers;
 }
@@ -34,18 +35,32 @@ body {
   grid-area: effects;
 }
 
-/* === LEFT: LAYERS PANEL === */
+/* LEFT PANEL: LAYERS */
 #layersPanel {
-  background: #181818;
+  background: #171717;
   padding: 12px;
-  border-right: 2px solid #222;
+  border-right: 2px solid #202020;
   overflow-y: auto;
-  min-height: 0;
 }
 
 #layersPanel h2 {
   font-size: 14px;
   margin: 0 0 8px 0;
+}
+
+#addLayerBtn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  background: #2d2d2d;
+  color: #eee;
+  font-size: 12px;
+  cursor: pointer;
+}
+#addLayerBtn:hover {
+  background: #3a3a3a;
 }
 
 .layer {
@@ -55,10 +70,10 @@ body {
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+  border: 1px solid #333;
 }
-
 .layer.active {
-  outline: 2px solid #4aa3ff;
+  border-color: #4aa3ff;
 }
 
 .layer-controls {
@@ -69,6 +84,7 @@ body {
 }
 
 .layer-controls button {
+  flex: 1;
   background: #333;
   border: none;
   color: #eee;
@@ -81,14 +97,13 @@ body {
   background: #444;
 }
 
-/* === CENTER: STAGE === */
+/* CENTER: STAGE */
 #stageWrapper {
   position: relative;
   background: #000;
-  border-left: 2px solid #222;
-  border-right: 2px solid #222;
+  border-left: 2px solid #202020;
+  border-right: 2px solid #202020;
   overflow: hidden;
-  min-height: 0;
 }
 
 #stage {
@@ -97,13 +112,13 @@ body {
   display: block;
 }
 
-/* LOGO / TEXT OVERLAY */
+/* TEXT / LOGO HUD */
 #overlayHud {
   position: absolute;
   bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 4px;
   letter-spacing: 2px;
@@ -115,68 +130,129 @@ body {
   color: #f3f3f3;
 }
 
-/* === RIGHT: MEDIA / MUSIC PANEL === */
+/* RIGHT: MEDIA + QUICK FX */
 #deckPanel {
-  background: #181818;
+  background: #171717;
   padding: 12px;
-  border-left: 2px solid #222;
+  border-left: 2px solid #202020;
   overflow-y: auto;
-  min-height: 0;
 }
 
 #deckPanel h2 {
   font-size: 14px;
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
+}
+
+#deckPanel h3 {
+  font-size: 12px;
+  margin: 10px 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #bbb;
+}
+
+.section {
+  margin-bottom: 10px;
+}
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 4px;
 }
 
 #deckGrid {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .deckItem {
-  padding: 6px 10px;
+  padding: 6px 8px;
   background: #222;
   border-radius: 4px;
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid #333;
 }
-
 .deckItem:hover {
   background: #333;
 }
-
 .deckItem.active {
   border-color: #4aa3ff;
 }
 
-/* === BOTTOM: INSPECTOR / EFFECTS PANEL === */
+/* QUICK EFFECTS CARD */
+#quickEffects {
+  padding: 8px;
+  background: #202020;
+  border-radius: 6px;
+  border: 1px solid #333;
+  font-size: 11px;
+}
+
+#quickEffects h4 {
+  margin: 0 0 4px 0;
+  font-size: 11px;
+}
+
+#quickEffects .qe-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+#quickEffects label {
+  font-size: 10px;
+}
+
+/* BOTTOM: INSPECTOR + GLOBAL */
 #inspectorPanel {
-  background: #181818;
-  padding: 12px;
+  background: #141414;
+  border-top: 2px solid #202020;
+  padding: 8px 12px;
   overflow-y: auto;
-  min-height: 0;
-  border-top: 2px solid #222;
 }
 
-#inspectorPanel h2 {
-  font-size: 14px;
-  margin: 0 0 8px 0;
+#inspectorColumns {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.1fr) minmax(320px, 1fr);
+  gap: 12px;
 }
 
-#inspectorPanel h3 {
+/* LEFT SIDE: INSPECTOR */
+#inspectorLeft h2,
+#inspectorRight h2 {
+  font-size: 13px;
+  margin: 0 0 6px 0;
+}
+
+#inspectorContent {
   font-size: 12px;
-  margin: 10px 0 6px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #bbb;
+}
+
+/* EFFECTS BODY IN 2 COLUMNS */
+#inspectorContent .effects-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+.inspector-group {
+  margin-bottom: 10px;
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
 }
 
 #inspectorPanel label {
@@ -189,32 +265,11 @@ body {
   width: 100%;
 }
 
-/* Inspector content layout */
-#inspectorContent {
-  font-size: 12px;
-}
-
-.inspector-group {
-  margin-bottom: 10px;
-}
-
-.control-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 6px;
-}
-
-/* Details / Effects section */
+/* DETAILS / COLLAPSIBLE EFFECTS */
 #inspectorContent details {
-  margin-top: 6px;
   border-radius: 4px;
   background: #202020;
   padding: 4px 6px 6px 6px;
-}
-
-#inspectorContent details[open] {
-  padding-bottom: 8px;
 }
 
 #inspectorContent details summary {
@@ -224,11 +279,9 @@ body {
   letter-spacing: 1px;
   list-style: none;
 }
-
 #inspectorContent details summary::-webkit-details-marker {
   display: none;
 }
-
 #inspectorContent details summary::before {
   content: "▾";
   display: inline-block;
@@ -236,20 +289,52 @@ body {
   font-size: 10px;
 }
 
-#inspectorContent details .effects-body {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* RIGHT SIDE: GLOBAL CONTROLS */
+#inspectorRight {
+  font-size: 12px;
 }
 
-/* Tempo controls */
+.global-group {
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  background: #202020;
+  border-radius: 6px;
+  border: 1px solid #292929;
+}
+
+.global-group h3 {
+  font-size: 11px;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #bbb;
+}
+
+.global-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.global-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* TEMPO / PRESETS */
 #tempoControls {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 4px;
 }
 
 #tapTempoBtn {
@@ -271,22 +356,42 @@ body {
   color: #ccc;
 }
 
-/* Generic form tweaks */
+#presetControls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+#presetControls input[type="text"] {
+  flex: 1;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+#presetControls button,
+.preset-buttons button {
+  background: #333;
+  border: none;
+  color: #eee;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 4px;
+}
+#presetControls button:hover,
+.preset-buttons button:hover {
+  background: #444;
+}
+
+/* GENERIC INPUTS */
 input[type="file"] {
   font-size: 11px;
 }
 
 audio {
   background: #111;
-}
- /* Spread per-layer effects into two columns so it's not cramped */
-#inspectorContent .effects-body {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 12px;
-  row-gap: 6px;
-}
-
-#inspectorContent .control-row {
-  margin-bottom: 2px;
 }
