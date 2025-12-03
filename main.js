@@ -31,6 +31,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const cameraZoomSlider = document.getElementById("cameraZoom");
   const cameraRotateSlider = document.getElementById("cameraRotate");
 
+  const moodSelect = document.getElementById("moodSelect");
+
   const logoTextInput = document.getElementById("logoTextInput");
   const logoVisibleCheckbox = document.getElementById("logoVisible");
   const logoSizeSlider = document.getElementById("logoSize");
@@ -55,6 +57,70 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("Missing key DOM elements. Check IDs in index.html.");
     return;
   }
+
+  // High-level mood / genre looks
+  const moodPresets = {
+    chill: {
+      name: "Chill / Ambient",
+      brightness: 0.4,
+      audioReact: 0.6,
+      cameraZoom: 1.15,
+      cameraRotateDeg: 0,
+      layerVisualModes: [0, 0, 1],
+      layerColorThemes: [0, 4],
+      layerBlends: ["normal", "screen"]
+    },
+    edm: {
+      name: "Peak EDM / Festival",
+      brightness: 0.9,
+      audioReact: 1.6,
+      cameraZoom: 0.85,
+      cameraRotateDeg: 10,
+      layerVisualModes: [2, 1, 0],
+      layerColorThemes: [2, 3, 7],
+      layerBlends: ["add", "screen", "add"]
+    },
+    dubstep: {
+      name: "Dubstep / Heavy Bass",
+      brightness: 0.8,
+      audioReact: 1.8,
+      cameraZoom: 0.9,
+      cameraRotateDeg: -8,
+      layerVisualModes: [2, 2, 1],
+      layerColorThemes: [5, 2],
+      layerBlends: ["add", "multiply"]
+    },
+    techno: {
+      name: "Techno / Minimal",
+      brightness: 0.5,
+      audioReact: 1.1,
+      cameraZoom: 1.0,
+      cameraRotateDeg: 0,
+      layerVisualModes: [1, 1, 0],
+      layerColorThemes: [3, 0],
+      layerBlends: ["screen", "normal"]
+    },
+    lofi: {
+      name: "Lofi / Soft Pastel",
+      brightness: 0.45,
+      audioReact: 0.5,
+      cameraZoom: 1.2,
+      cameraRotateDeg: 0,
+      layerVisualModes: [0, 1],
+      layerColorThemes: [4, 7],
+      layerBlends: ["normal", "screen"]
+    },
+    psy: {
+      name: "Psytrance / Hypno",
+      brightness: 0.85,
+      audioReact: 1.4,
+      cameraZoom: 0.95,
+      cameraRotateDeg: 20,
+      layerVisualModes: [2, 1, 2],
+      layerColorThemes: [2, 7, 3],
+      layerBlends: ["add", "screen", "add"]
+    }
+  };
 
   // Global camera state
   let cameraZoom = parseFloat(cameraZoomSlider.value || "1");
@@ -235,6 +301,44 @@ window.addEventListener("DOMContentLoaded", () => {
   autoSwitchIntervalSlider.addEventListener("input", () => {
     autoSwitchInterval = parseFloat(autoSwitchIntervalSlider.value || "20");
   });
+
+  // Apply mood / genre look
+  if (moodSelect) {
+    moodSelect.addEventListener("change", () => {
+      const id = moodSelect.value;
+      if (!id || !moodPresets[id]) return;
+
+      const cfg = moodPresets[id];
+
+      // Global settings
+      brightnessControl.value = String(cfg.brightness);
+      audioReactSlider.value = String(cfg.audioReact);
+
+      cameraZoom = cfg.cameraZoom;
+      cameraRotateDeg = cfg.cameraRotateDeg;
+      cameraZoomSlider.value = String(cameraZoom);
+      cameraRotateSlider.value = String(cameraRotateDeg);
+
+      // Ensure we have some layers
+      if (layers.length === 0) {
+        layers.push(new Layer());
+        selectedLayer = 0;
+      }
+
+      layers.forEach((layer, i) => {
+        const vm = cfg.layerVisualModes;
+        const ct = cfg.layerColorThemes;
+        const bl = cfg.layerBlends;
+
+        layer.visualMode = vm[i % vm.length];
+        layer.colorTheme = ct[i % ct.length];
+        layer.blend = bl[i % bl.length];
+      });
+
+      updateLayerUI();
+      updateInspector();
+    });
+  }
 
   // ----- Layer UI -----
 
