@@ -403,73 +403,94 @@ window.addEventListener("DOMContentLoaded", () => {
     const layer = layers[selectedLayer];
 
     inspectorContent.innerHTML = `
-      <h3>Layer ${selectedLayer + 1}</h3>
+      <div class="inspector-group">
+        <div class="control-row">
+          <label><strong>Layer ${selectedLayer + 1}</strong></label>
+        </div>
 
-      <label>Opacity</label>
-      <input
-        type="range"
-        id="layerOpacity"
-        min="0"
-        max="1"
-        step="0.01"
-        value="${layer.opacity}"
-      />
+        <div class="control-row">
+          <label>Opacity</label>
+          <input
+            type="range"
+            id="layerOpacity"
+            min="0"
+            max="1"
+            step="0.01"
+            value="${layer.opacity}"
+          />
+        </div>
 
-      <details id="effectsPanel" style="margin-top:10px;" open>
-        <summary>Effects</summary>
+        <details id="effectsPanel" open>
+          <summary>Effects</summary>
+          <div class="effects-body">
 
-        <label style="margin-top:6px;">Visual Mode</label>
-        <select id="layerVisualMode">
-          <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
-          <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope</option>
-          <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
-        </select>
+            <div class="control-row">
+              <label>Visual Mode</label>
+              <select id="layerVisualMode">
+                <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
+                <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope</option>
+                <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
+              </select>
+            </div>
 
-        <label style="margin-top:6px;">Color Theme</label>
-        <select id="layerColorTheme">
-          <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
-          <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
-          <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
-          <option value="3" ${layer.colorTheme === 3 ? "selected" : ""}>Cyber Grid</option>
-          <option value="4" ${layer.colorTheme === 4 ? "selected" : ""}>Sunset</option>
-          <option value="5" ${layer.colorTheme === 5 ? "selected" : ""}>Toxic Green</option>
-          <option value="6" ${layer.colorTheme === 6 ? "selected" : ""}>Ice Laser</option>
-          <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
-        </select>
+            <div class="control-row">
+              <label>Color Theme</label>
+              <select id="layerColorTheme">
+                <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
+                <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
+                <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
+                <option value="3" ${layer.colorTheme === 3 ? "selected" : ""}>Cyber Grid</option>
+                <option value="4" ${layer.colorTheme === 4 ? "selected" : ""}>Sunset</option>
+                <option value="5" ${layer.colorTheme === 5 ? "selected" : ""}>Toxic Green</option>
+                <option value="6" ${layer.colorTheme === 6 ? "selected" : ""}>Ice Laser</option>
+                <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
+              </select>
+            </div>
 
-        <label style="margin-top:6px;">Blend Mode</label>
-        <select id="layerBlendMode">
-          <option value="normal" ${layer.blend === "normal" ? "selected" : ""}>Normal</option>
-          <option value="add" ${layer.blend === "add" ? "selected" : ""}>Add</option>
-          <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
-          <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
-        </select>
+            <div class="control-row">
+              <label>Blend Mode</label>
+              <select id="layerBlendMode">
+                <option value="normal" ${layer.blend === "normal" ? "selected" : ""}>Normal</option>
+                <option value="add" ${layer.blend === "add" ? "selected" : ""}>Add</option>
+                <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
+                <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
+              </select>
+            </div>
 
-        <label style="margin-top:6px;">Position X</label>
-        <input
-          type="range"
-          id="layerPosX"
-          min="-1"
-          max="1"
-          step="0.01"
-          value="${layer.offsetX}"
-        />
+            <div class="control-row">
+              <label>Position X</label>
+              <input
+                type="range"
+                id="layerPosX"
+                min="-1"
+                max="1"
+                step="0.01"
+                value="${layer.offsetX}"
+              />
+            </div>
 
-        <label style="margin-top:4px;">Position Y</label>
-        <input
-          type="range"
-          id="layerPosY"
-          min="-1"
-          max="1"
-          step="0.01"
-          value="${layer.offsetY}"
-        />
+            <div class="control-row">
+              <label>Position Y</label>
+              <input
+                type="range"
+                id="layerPosY"
+                min="-1"
+                max="1"
+                step="0.01"
+                value="${layer.offsetY}"
+              />
+            </div>
 
-        <label style="margin-top:4px; display:block;">
-          <input type="checkbox" id="layerAudioPosReact" ${layer.audioPositionReact ? "checked" : ""} />
-          Audio-reactive position (bass wobble)
-        </label>
-      </details>
+            <div class="control-row">
+              <label style="display:flex; align-items:center; gap:4px;">
+                <input type="checkbox" id="layerAudioPosReact" ${layer.audioPositionReact ? "checked" : ""} />
+                Audio-reactive position (bass wobble)
+              </label>
+            </div>
+
+          </div>
+        </details>
+      </div>
     `;
 
     const opacitySlider = document.getElementById("layerOpacity");
@@ -814,23 +835,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let startTime = performance.now();
 
-  function setBlendMode(blend) {
-    switch (blend) {
-      case "add":
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-        break;
-      case "screen":
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_COLOR);
-        break;
-      case "multiply":
-        gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
-        break;
-      default:
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        break;
-    }
-  }
-
   function render() {
     resizeCanvas();
 
@@ -872,7 +876,21 @@ window.addEventListener("DOMContentLoaded", () => {
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
 
-      setBlendMode(layer.blend);
+      // Set blend mode per layer
+      switch (layer.blend) {
+        case "add":
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+          break;
+        case "screen":
+          gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_COLOR);
+          break;
+        case "multiply":
+          gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
+          break;
+        default:
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          break;
+      }
 
       // Position, with optional audio wobble
       let offX = layer.offsetX || 0;
