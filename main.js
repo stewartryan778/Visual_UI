@@ -13,7 +13,7 @@ window.addEventListener("DOMContentLoaded", () => {
       this.blend = "normal"; // normal | add | screen | multiply
       this.source = null;    // future video/image
       this.type = "shader";
-      this.visualMode = 0;   // 0..4
+      this.visualMode = 0;   // 0..7
       this.colorTheme = 0;   // 0..7
       this.offsetX = 0.0;
       this.offsetY = 0.0;
@@ -26,6 +26,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const addLayerBtn = document.getElementById("addLayerBtn");
   const inspectorContent = document.getElementById("inspectorContent");
   const brightnessControl = document.getElementById("brightness");
+  const quickEffects = document.getElementById("quickEffects");
 
   const audioReactSlider = document.getElementById("audioReact");
 
@@ -250,6 +251,7 @@ window.addEventListener("DOMContentLoaded", () => {
     selectedLayer = 0;
     updateLayerUI();
     updateInspector();
+    updateQuickEffects();
   }
 
   savePresetBtn.addEventListener("click", () => {
@@ -321,7 +323,6 @@ window.addEventListener("DOMContentLoaded", () => {
   tapTempoBtn.addEventListener("click", () => {
     const now = performance.now();
     if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
-      // too long since last tap -> reset
       tapTimes = [];
     }
     tapTimes.push(now);
@@ -334,7 +335,7 @@ window.addEventListener("DOMContentLoaded", () => {
         intervals.push(tapTimes[i] - tapTimes[i - 1]);
       }
       const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-      const newBpm = 60000 / avg; // ms -> BPM
+      const newBpm = 60000 / avg;
       if (!isNaN(newBpm) && newBpm > 40 && newBpm < 240) {
         bpm = newBpm;
         beatPhaseStart = now;
@@ -351,7 +352,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const cfg = moodPresets[id];
 
-      // Global settings
       brightnessControl.value = String(cfg.brightness);
       audioReactSlider.value = String(cfg.audioReact);
 
@@ -360,7 +360,6 @@ window.addEventListener("DOMContentLoaded", () => {
       cameraZoomSlider.value = String(cameraZoom);
       cameraRotateSlider.value = String(cameraRotateDeg);
 
-      // Ensure we have some layers
       if (layers.length === 0) {
         layers.push(new Layer());
         selectedLayer = 0;
@@ -378,6 +377,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       updateLayerUI();
       updateInspector();
+      updateQuickEffects();
     });
   }
 
@@ -388,6 +388,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (selectedLayer === null) selectedLayer = 0;
     updateLayerUI();
     updateInspector();
+    updateQuickEffects();
   }
 
   addLayer(new Layer());
@@ -430,6 +431,7 @@ window.addEventListener("DOMContentLoaded", () => {
           selectedLayer = idx;
           updateLayerUI();
           updateInspector();
+          updateQuickEffects();
         }
       });
     });
@@ -473,6 +475,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
                 <option value="3" ${layer.visualMode === 3 ? "selected" : ""}>Tunnel Lines</option>
                 <option value="4" ${layer.visualMode === 4 ? "selected" : ""}>Pixel Mosaic</option>
+                <option value="5" ${layer.visualMode === 5 ? "selected" : ""}>Orbital Objects</option>
+                <option value="6" ${layer.visualMode === 6 ? "selected" : ""}>Audio Bars</option>
+                <option value="7" ${layer.visualMode === 7 ? "selected" : ""}>Starfield</option>
               </select>
             </div>
 
@@ -563,10 +568,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     modeSelect.addEventListener("change", e => {
       layer.visualMode = parseInt(e.target.value, 10);
+      updateQuickEffects();
     });
 
     themeSelect.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
+      updateQuickEffects();
     });
 
     blendSelect.addEventListener("change", e => {
@@ -587,6 +594,79 @@ window.addEventListener("DOMContentLoaded", () => {
 
     strobeSlider.addEventListener("input", e => {
       layer.strobeIntensity = parseFloat(e.target.value);
+      updateQuickEffects();
+    });
+  }
+
+  // Quick Effects panel on the right
+  function updateQuickEffects() {
+    if (!quickEffects) return;
+
+    if (selectedLayer === null) {
+      quickEffects.innerHTML = `<p style="font-size:11px; color:#aaa;">No layer selected</p>`;
+      return;
+    }
+
+    const layer = layers[selectedLayer];
+
+    quickEffects.innerHTML = `
+      <h4>Layer ${selectedLayer + 1}</h4>
+      <div class="qe-row">
+        <label>Visual Mode</label>
+        <select id="qeVisualMode">
+          <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial</option>
+          <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleido</option>
+          <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl</option>
+          <option value="3" ${layer.visualMode === 3 ? "selected" : ""}>Tunnel</option>
+          <option value="4" ${layer.visualMode === 4 ? "selected" : ""}>Pixel</option>
+          <option value="5" ${layer.visualMode === 5 ? "selected" : ""}>Orbit</option>
+          <option value="6" ${layer.visualMode === 6 ? "selected" : ""}>Bars</option>
+          <option value="7" ${layer.visualMode === 7 ? "selected" : ""}>Stars</option>
+        </select>
+      </div>
+      <div class="qe-row">
+        <label>Color Theme</label>
+        <select id="qeColorTheme">
+          <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
+          <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
+          <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
+          <option value="3" ${layer.colorTheme === 3 ? "selected" : ""}>Cyber</option>
+          <option value="4" ${layer.colorTheme === 4 ? "selected" : ""}>Sunset</option>
+          <option value="5" ${layer.colorTheme === 5 ? "selected" : ""}>Toxic</option>
+          <option value="6" ${layer.colorTheme === 6 ? "selected" : ""}>Ice</option>
+          <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
+        </select>
+      </div>
+      <div class="qe-row">
+        <label>Strobe / Flash</label>
+        <input
+          type="range"
+          id="qeStrobe"
+          min="0"
+          max="1"
+          step="0.01"
+          value="${layer.strobeIntensity}"
+        />
+      </div>
+    `;
+
+    const qeMode = document.getElementById("qeVisualMode");
+    const qeTheme = document.getElementById("qeColorTheme");
+    const qeStrobe = document.getElementById("qeStrobe");
+
+    qeMode.addEventListener("change", e => {
+      layer.visualMode = parseInt(e.target.value, 10);
+      updateInspector();
+    });
+
+    qeTheme.addEventListener("change", e => {
+      layer.colorTheme = parseInt(e.target.value, 10);
+      updateInspector();
+    });
+
+    qeStrobe.addEventListener("input", e => {
+      layer.strobeIntensity = parseFloat(e.target.value);
+      updateInspector();
     });
   }
 
@@ -735,6 +815,12 @@ window.addEventListener("DOMContentLoaded", () => {
       return a + b * cos(6.28318 * (c * t + d));
     }
 
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 345.45));
+      p += dot(p, p + 34.345);
+      return fract(p.x * p.y);
+    }
+
     void main() {
       vec2 uv = gl_FragCoord.xy / u_resolution.xy;
       vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
@@ -806,14 +892,19 @@ window.addEventListener("DOMContentLoaded", () => {
         D = vec3(0.1, 0.8, 0.9);
       }
 
-      vec3 color = vec3(0.0);
+      // Soft background gradient for more variation
+      float bgT = uv.y + uv.x * 0.3 + t * 0.03;
+      vec3 bg = palette(bgT, A, B, C, D) * 0.25;
+
+      vec3 color = bg;
 
       // MODE 0: Radial Waves
       if (u_mode < 0.5) {
         float w = sin(10.0 * r - t * (2.0 + u_bass * 6.0));
         float v = 0.5 + 0.5 * w;
         float pattern = v + 0.25 * sin(ang * 6.0 + t * (1.0 + u_mid * 3.0));
-        color = palette(pattern + u_bass * 0.5, A, B, C, D);
+        vec3 fx = palette(pattern + u_bass * 0.5, A, B, C, D);
+        color = mix(bg, fx, 0.85);
 
       // MODE 1: Kaleidoscope Grid
       } else if (u_mode < 1.5) {
@@ -824,7 +915,8 @@ window.addEventListener("DOMContentLoaded", () => {
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0) + r * 10.0);
         float baseT = t * 0.25 + u_mid;
         vec3 baseCol = palette(baseT, A, B, C, D);
-        color = baseCol + lines * pulse * 1.5;
+        vec3 fx = baseCol + lines * pulse * 1.5;
+        color = mix(bg, fx, 0.9);
 
       // MODE 2: Swirl Orbit
       } else if (u_mode < 2.5) {
@@ -833,9 +925,10 @@ window.addEventListener("DOMContentLoaded", () => {
         float spark = 0.5 + 0.5 * sin((p.x + p.y) * 30.0 + t * (4.0 + u_high * 10.0));
         float baseT = u_bass * 0.8 + t * 0.1;
         vec3 baseCol = palette(baseT, A, B, C, D);
-        color = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
+        vec3 fx = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
+        color = mix(bg, fx, 0.9);
 
-      // MODE 3: Tunnel Lines (audio-reactive tunnel)
+      // MODE 3: Tunnel Lines
       } else if (u_mode < 3.5) {
         vec2 q = p;
         float depth = 1.0 / (0.3 + length(q));
@@ -843,17 +936,70 @@ window.addEventListener("DOMContentLoaded", () => {
         float rings   = 0.5 + 0.5 * sin((length(q) - t * (1.0 + u_mid * 4.0)) * 8.0);
         float m = mix(stripes, rings, 0.5 + 0.5 * u_high);
         float tt = depth + m + u_bass * 0.6;
-        color = palette(tt, A, B, C, D) * depth * 1.8;
+        vec3 fx = palette(tt, A, B, C, D) * depth * 1.8;
+        color = mix(bg, fx, 0.9);
 
-      // MODE 4: Pixel Mosaic (chunky audio-reactive tiles)
-      } else {
+      // MODE 4: Pixel Mosaic
+      } else if (u_mode < 4.5) {
         float scale = 30.0 + u_high * 40.0;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 pix = floor((uv * aspect) * scale) / scale;
         float cell = sin((pix.x + pix.y) * 20.0 + t * (3.0 + u_mid * 5.0));
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0));
         float tt = cell + pulse * 0.3 + u_bass * 0.5;
-        color = palette(tt, A, B, C, D);
+        vec3 fx = palette(tt, A, B, C, D);
+        color = mix(bg, fx, 0.85);
+
+      // MODE 5: Orbital Objects (glowing circles orbiting)
+      } else if (u_mode < 5.5) {
+        vec2 q = p;
+        float accum = 0.0;
+        // 5 orbiting circles
+        for (float i = 0.0; i < 5.0; i += 1.0) {
+          float angle = t * (0.3 + u_mid * 2.0) + i * 6.28318 / 5.0;
+          float radius = 0.6 + 0.3 * sin(t + i * 1.7);
+          vec2 center = vec2(cos(angle), sin(angle)) * radius;
+          float d = length(q - center);
+          float circle = smoothstep(0.25, 0.0, d);
+          accum += circle;
+        }
+        float baseT = t * 0.2 + u_high * 0.8;
+        vec3 baseCol = palette(baseT, A, B, C, D);
+        vec3 fx = baseCol * accum * (0.6 + u_bass * 1.6);
+        color = mix(bg, fx, 0.95);
+
+      // MODE 6: Audio Bars (EQ-style)
+      } else if (u_mode < 6.5) {
+        vec2 uv2 = uv;
+        float bands = 32.0;
+        float bandIndex = floor(uv2.x * bands);
+        float xNorm = bandIndex / (bands - 1.0);
+        float amp = mix(u_bass, u_mid, xNorm) * 0.9 + 0.05;
+        float barMask = step(uv2.y, amp);
+        float border = smoothstep(amp, amp - 0.03, uv2.y);
+        float glow = barMask * (0.35 + 0.65 * border);
+        float tt = xNorm + t * 0.2 + u_high * 0.3;
+        vec3 barColor = palette(tt, A, B, C, D);
+        vec3 fx = barColor * glow * 1.8;
+        color = mix(bg, fx, 0.95);
+
+      // MODE 7: Starfield
+      } else {
+        vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
+        vec2 grid = (uv * aspect) * 40.0;
+        vec2 cell = floor(grid);
+        vec2 f = fract(grid) - 0.5;
+
+        float n = hash21(cell);
+        float star = smoothstep(0.25, 0.0, length(f * (1.2 + n * 1.5)));
+        float twinkle = 0.5 + 0.5 * sin(t * (2.0 + n * 6.0) + n * 10.0);
+        float energy = star * twinkle * (0.3 + u_high * 1.7);
+        float gate = step(0.82, n); // sparse
+
+        vec3 starCol = palette(n + u_high + t * 0.05, A, B, C, D);
+        vec3 fx = starCol * energy * gate;
+
+        color = bg + fx;
       }
 
       // Vignette
@@ -939,7 +1085,6 @@ window.addEventListener("DOMContentLoaded", () => {
     let { bass, mid, high } = getBands();
     const react = parseFloat(audioReactSlider.value || "1");
 
-    // scale audio by react knob
     let bassR = Math.min(1, bass * react);
     let midR  = Math.min(1, mid  * react);
     let highR = Math.min(1, high * react);
@@ -952,13 +1097,11 @@ window.addEventListener("DOMContentLoaded", () => {
     const zoom = cameraZoom;
     const rotateRad = (cameraRotateDeg * Math.PI) / 180.0;
 
-    // Audio-reactive logo glow & scale
     const logoGlow = 0.25 + bassR * 0.6;
     const logoScale = 1 + bassR * 0.25;
     overlayHud.style.backgroundColor = `rgba(0,0,0,${logoGlow})`;
     overlayHud.style.transform = `translateX(-50%) scale(${logoScale})`;
 
-    // Auto scene switching
     if (autoSwitchEnabled && presets.length > 0) {
       const elapsedSec = (now - lastSwitchTime) / 1000;
       if (elapsedSec >= autoSwitchInterval) {
@@ -968,14 +1111,12 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Beat phase from tapped BPM
     const beatSeconds = (now - beatPhaseStart) / 1000;
-    const beatPhase = beatSeconds * (bpm / 60.0); // cycles
+    const beatPhase = beatSeconds * (bpm / 60.0);
 
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
 
-      // Blend mode per layer
       switch (layer.blend) {
         case "add":
           gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -991,7 +1132,6 @@ window.addEventListener("DOMContentLoaded", () => {
           break;
       }
 
-      // Position, with optional audio wobble
       let offX = layer.offsetX || 0;
       let offY = layer.offsetY || 0;
       if (layer.audioPositionReact) {
