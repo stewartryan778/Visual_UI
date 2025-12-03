@@ -13,6 +13,7 @@ window.addEventListener("DOMContentLoaded", () => {
       this.blend = "normal"; // normal | add | screen | multiply
       this.source = null;    // future video/image
       this.type = "shader";
+      this.kind = "shader";  // "shader" = background / fullscreen, "object" = overlay object
       this.visualMode = 0;   // 0..7
       this.colorTheme = 0;   // 0..7
       this.offsetX = 0.0;
@@ -63,7 +64,7 @@ window.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // High-level mood / genre looks (using 0..4 visual modes)
+  // High-level mood / genre looks
   const moodPresets = {
     chill: {
       name: "Chill / Ambient",
@@ -71,7 +72,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.6,
       cameraZoom: 1.15,
       cameraRotateDeg: 0,
-      layerVisualModes: [0, 3, 1],          // Radial, Tunnel, Kaleido
+      layerVisualModes: [0, 3, 1],
       layerColorThemes: [0, 4],
       layerBlends: ["normal", "screen"]
     },
@@ -81,7 +82,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.6,
       cameraZoom: 0.85,
       cameraRotateDeg: 10,
-      layerVisualModes: [2, 4, 3],          // Swirl, Pixel, Tunnel
+      layerVisualModes: [2, 4, 3],
       layerColorThemes: [2, 3, 7],
       layerBlends: ["add", "screen", "add"]
     },
@@ -91,7 +92,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.8,
       cameraZoom: 0.9,
       cameraRotateDeg: -8,
-      layerVisualModes: [2, 3, 4],          // Swirl, Tunnel, Pixel
+      layerVisualModes: [2, 3, 4],
       layerColorThemes: [5, 2],
       layerBlends: ["add", "multiply"]
     },
@@ -101,7 +102,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.1,
       cameraZoom: 1.0,
       cameraRotateDeg: 0,
-      layerVisualModes: [1, 3, 4],          // Kaleido, Tunnel, Pixel
+      layerVisualModes: [1, 3, 4],
       layerColorThemes: [3, 0],
       layerBlends: ["screen", "normal"]
     },
@@ -111,7 +112,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.5,
       cameraZoom: 1.2,
       cameraRotateDeg: 0,
-      layerVisualModes: [0, 4],             // Radial, Pixel
+      layerVisualModes: [0, 4],
       layerColorThemes: [4, 7],
       layerBlends: ["normal", "screen"]
     },
@@ -121,7 +122,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.4,
       cameraZoom: 0.95,
       cameraRotateDeg: 20,
-      layerVisualModes: [2, 3, 1],          // Swirl, Tunnel, Kaleido
+      layerVisualModes: [2, 3, 1],
       layerColorThemes: [2, 7, 3],
       layerBlends: ["add", "screen", "add"]
     }
@@ -203,6 +204,7 @@ window.addEventListener("DOMContentLoaded", () => {
         enabled: l.enabled,
         opacity: l.opacity,
         blend: l.blend,
+        kind: l.kind,
         visualMode: l.visualMode,
         colorTheme: l.colorTheme,
         offsetX: l.offsetX,
@@ -236,6 +238,7 @@ window.addEventListener("DOMContentLoaded", () => {
       l.enabled = pl.enabled ?? true;
       l.opacity = pl.opacity ?? 1;
       l.blend = pl.blend ?? "normal";
+      l.kind = pl.kind ?? "shader";
       l.visualMode = pl.visualMode ?? 0;
       l.colorTheme = pl.colorTheme ?? 0;
       l.offsetX = pl.offsetX ?? 0;
@@ -373,6 +376,7 @@ window.addEventListener("DOMContentLoaded", () => {
         layer.visualMode = vm[i % vm.length];
         layer.colorTheme = ct[i % ct.length];
         layer.blend = bl[i % bl.length];
+        layer.kind = "shader"; // moods use fullscreen layers by default
       });
 
       updateLayerUI();
@@ -449,6 +453,14 @@ window.addEventListener("DOMContentLoaded", () => {
       <div class="inspector-group">
         <div class="control-row">
           <label><strong>Layer ${selectedLayer + 1}</strong></label>
+        </div>
+
+        <div class="control-row">
+          <label>Layer Type</label>
+          <select id="layerKind">
+            <option value="shader" ${layer.kind === "shader" ? "selected" : ""}>Background / Fullscreen</option>
+            <option value="object" ${layer.kind === "object" ? "selected" : ""}>Object Overlay</option>
+          </select>
         </div>
 
         <div class="control-row">
@@ -553,6 +565,7 @@ window.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    const kindSelect = document.getElementById("layerKind");
     const opacitySlider = document.getElementById("layerOpacity");
     const modeSelect = document.getElementById("layerVisualMode");
     const themeSelect = document.getElementById("layerColorTheme");
@@ -561,6 +574,11 @@ window.addEventListener("DOMContentLoaded", () => {
     const posYSlider = document.getElementById("layerPosY");
     const audioPosReactCheckbox = document.getElementById("layerAudioPosReact");
     const strobeSlider = document.getElementById("layerStrobe");
+
+    kindSelect.addEventListener("change", e => {
+      layer.kind = e.target.value;
+      updateQuickEffects();
+    });
 
     opacitySlider.addEventListener("input", e => {
       layer.opacity = parseFloat(e.target.value);
@@ -610,7 +628,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const layer = layers[selectedLayer];
 
     quickEffects.innerHTML = `
-      <h4>Layer ${selectedLayer + 1}</h4>
+      <h4>Layer ${selectedLayer + 1} (${layer.kind === "object" ? "Object" : "BG"})</h4>
       <div class="qe-row">
         <label>Visual Mode</label>
         <select id="qeVisualMode">
@@ -810,6 +828,7 @@ window.addEventListener("DOMContentLoaded", () => {
     uniform float u_offsetY;
     uniform float u_strobe;
     uniform float u_beatPhase;
+    uniform float u_kind;   // 0 = shader BG, 1 = object overlay
 
     vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b * cos(6.28318 * (c * t + d));
@@ -841,72 +860,59 @@ window.addEventListener("DOMContentLoaded", () => {
       vec3 C;
       vec3 D;
 
-      // 8 color themes
       if (u_theme < 0.5) {
-        // 0: COOL
         A = vec3(0.13, 0.18, 0.25);
         B = vec3(0.3, 0.6, 1.0);
         C = vec3(0.35, 0.45, 0.75);
         D = vec3(0.2, 0.4, 0.9);
       } else if (u_theme < 1.5) {
-        // 1: WARM
         A = vec3(0.22, 0.14, 0.10);
         B = vec3(1.0, 0.5, 0.1);
         C = vec3(0.5, 0.25, 0.1);
         D = vec3(0.15, 0.05, 0.0);
       } else if (u_theme < 2.5) {
-        // 2: NEON
         A = vec3(0.05, 0.05, 0.10);
         B = vec3(1.0, 0.2, 1.4);
         C = vec3(0.7, 0.4, 0.9);
         D = vec3(0.2, 0.4, 1.0);
       } else if (u_theme < 3.5) {
-        // 3: CYBER GRID
         A = vec3(0.05, 0.20, 0.08);
         B = vec3(0.1, 1.0, 0.5);
         C = vec3(0.3, 0.8, 0.5);
         D = vec3(0.0, 0.4, 0.1);
       } else if (u_theme < 4.5) {
-        // 4: SUNSET
         A = vec3(0.4, 0.1, 0.2);
         B = vec3(1.0, 0.6, 0.3);
         C = vec3(0.9, 0.3, 0.5);
         D = vec3(0.3, 0.1, 0.5);
       } else if (u_theme < 5.5) {
-        // 5: TOXIC GREEN
         A = vec3(0.0, 0.2, 0.05);
         B = vec3(0.7, 1.0, 0.1);
         C = vec3(0.3, 0.9, 0.1);
         D = vec3(0.1, 0.4, 0.0);
       } else if (u_theme < 6.5) {
-        // 6: ICE LASER
         A = vec3(0.05, 0.08, 0.15);
         B = vec3(0.3, 0.8, 1.5);
         C = vec3(0.2, 0.6, 1.0);
         D = vec3(0.0, 0.3, 0.9);
       } else {
-        // 7: VAPORWAVE
         A = vec3(0.15, 0.07, 0.20);
         B = vec3(0.9, 0.4, 1.2);
         C = vec3(0.4, 0.3, 0.9);
         D = vec3(0.1, 0.8, 0.9);
       }
 
-      // Soft background gradient for more variation
       float bgT = uv.y + uv.x * 0.3 + t * 0.03;
       vec3 bg = palette(bgT, A, B, C, D) * 0.25;
 
-      vec3 color = bg;
+      vec3 fx = vec3(0.0);
 
-      // MODE 0: Radial Waves
       if (u_mode < 0.5) {
         float w = sin(10.0 * r - t * (2.0 + u_bass * 6.0));
         float v = 0.5 + 0.5 * w;
         float pattern = v + 0.25 * sin(ang * 6.0 + t * (1.0 + u_mid * 3.0));
-        vec3 fx = palette(pattern + u_bass * 0.5, A, B, C, D);
-        color = mix(bg, fx, 0.85);
+        fx = palette(pattern + u_bass * 0.5, A, B, C, D);
 
-      // MODE 1: Kaleidoscope Grid
       } else if (u_mode < 1.5) {
         vec2 g = p;
         g = abs(g);
@@ -915,20 +921,16 @@ window.addEventListener("DOMContentLoaded", () => {
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0) + r * 10.0);
         float baseT = t * 0.25 + u_mid;
         vec3 baseCol = palette(baseT, A, B, C, D);
-        vec3 fx = baseCol + lines * pulse * 1.5;
-        color = mix(bg, fx, 0.9);
+        fx = baseCol + lines * pulse * 1.5;
 
-      // MODE 2: Swirl Orbit
       } else if (u_mode < 2.5) {
         float swirl = sin(ang * 4.0 + r * 8.0 - t * (1.0 + u_bass * 4.0));
         float ring = exp(-r * 4.0) * (0.5 + 0.5 * swirl);
         float spark = 0.5 + 0.5 * sin((p.x + p.y) * 30.0 + t * (4.0 + u_high * 10.0));
         float baseT = u_bass * 0.8 + t * 0.1;
         vec3 baseCol = palette(baseT, A, B, C, D);
-        vec3 fx = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
-        color = mix(bg, fx, 0.9);
+        fx = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
 
-      // MODE 3: Tunnel Lines
       } else if (u_mode < 3.5) {
         vec2 q = p;
         float depth = 1.0 / (0.3 + length(q));
@@ -936,10 +938,8 @@ window.addEventListener("DOMContentLoaded", () => {
         float rings   = 0.5 + 0.5 * sin((length(q) - t * (1.0 + u_mid * 4.0)) * 8.0);
         float m = mix(stripes, rings, 0.5 + 0.5 * u_high);
         float tt = depth + m + u_bass * 0.6;
-        vec3 fx = palette(tt, A, B, C, D) * depth * 1.8;
-        color = mix(bg, fx, 0.9);
+        fx = palette(tt, A, B, C, D) * depth * 1.8;
 
-      // MODE 4: Pixel Mosaic
       } else if (u_mode < 4.5) {
         float scale = 30.0 + u_high * 40.0;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
@@ -947,14 +947,11 @@ window.addEventListener("DOMContentLoaded", () => {
         float cell = sin((pix.x + pix.y) * 20.0 + t * (3.0 + u_mid * 5.0));
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0));
         float tt = cell + pulse * 0.3 + u_bass * 0.5;
-        vec3 fx = palette(tt, A, B, C, D);
-        color = mix(bg, fx, 0.85);
+        fx = palette(tt, A, B, C, D);
 
-      // MODE 5: Orbital Objects (glowing circles orbiting)
       } else if (u_mode < 5.5) {
         vec2 q = p;
         float accum = 0.0;
-        // 5 orbiting circles
         for (float i = 0.0; i < 5.0; i += 1.0) {
           float angle = t * (0.3 + u_mid * 2.0) + i * 6.28318 / 5.0;
           float radius = 0.6 + 0.3 * sin(t + i * 1.7);
@@ -965,10 +962,8 @@ window.addEventListener("DOMContentLoaded", () => {
         }
         float baseT = t * 0.2 + u_high * 0.8;
         vec3 baseCol = palette(baseT, A, B, C, D);
-        vec3 fx = baseCol * accum * (0.6 + u_bass * 1.6);
-        color = mix(bg, fx, 0.95);
+        fx = baseCol * accum * (0.6 + u_bass * 1.6);
 
-      // MODE 6: Audio Bars (EQ-style)
       } else if (u_mode < 6.5) {
         vec2 uv2 = uv;
         float bands = 32.0;
@@ -980,10 +975,8 @@ window.addEventListener("DOMContentLoaded", () => {
         float glow = barMask * (0.35 + 0.65 * border);
         float tt = xNorm + t * 0.2 + u_high * 0.3;
         vec3 barColor = palette(tt, A, B, C, D);
-        vec3 fx = barColor * glow * 1.8;
-        color = mix(bg, fx, 0.95);
+        fx = barColor * glow * 1.8;
 
-      // MODE 7: Starfield
       } else {
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 grid = (uv * aspect) * 40.0;
@@ -994,25 +987,34 @@ window.addEventListener("DOMContentLoaded", () => {
         float star = smoothstep(0.25, 0.0, length(f * (1.2 + n * 1.5)));
         float twinkle = 0.5 + 0.5 * sin(t * (2.0 + n * 6.0) + n * 10.0);
         float energy = star * twinkle * (0.3 + u_high * 1.7);
-        float gate = step(0.82, n); // sparse
+        float gate = step(0.82, n);
 
         vec3 starCol = palette(n + u_high + t * 0.05, A, B, C, D);
-        vec3 fx = starCol * energy * gate;
-
-        color = bg + fx;
+        fx = starCol * energy * gate;
       }
 
-      // Vignette
       float vignette = smoothstep(0.9, 0.3, r);
-      color *= vignette;
+      fx *= vignette;
 
-      // Beat-based strobe: sin on beatPhase, controlled by u_strobe
       float beatPulse = 0.5 + 0.5 * sin(6.28318 * u_beatPhase);
       float flash = mix(1.0, 0.3 + beatPulse * 1.7, u_strobe);
-      color *= flash;
+      fx *= flash;
+
+      vec3 color;
+      float alpha;
+
+      if (u_kind < 0.5) {
+        color = mix(bg, fx, 0.9);
+        alpha = u_opacity;
+      } else {
+        // Object overlay: no bg, alpha from intensity
+        color = fx;
+        float intensity = clamp((fx.r + fx.g + fx.b) / 3.0, 0.0, 1.0);
+        alpha = u_opacity * intensity;
+      }
 
       color *= u_brightness;
-      gl_FragColor = vec4(color, u_opacity);
+      gl_FragColor = vec4(color, alpha);
     }
   `;
 
@@ -1070,6 +1072,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const uOffsetYLoc = gl.getUniformLocation(program, "u_offsetY");
   const uStrobeLoc = gl.getUniformLocation(program, "u_strobe");
   const uBeatPhaseLoc = gl.getUniformLocation(program, "u_beatPhase");
+  const uKindLoc = gl.getUniformLocation(program, "u_kind");
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -1154,6 +1157,7 @@ window.addEventListener("DOMContentLoaded", () => {
       gl.uniform1f(uOffsetYLoc, offY);
       gl.uniform1f(uStrobeLoc, layer.strobeIntensity);
       gl.uniform1f(uBeatPhaseLoc, beatPhase);
+      gl.uniform1f(uKindLoc, layer.kind === "object" ? 1.0 : 0.0);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
