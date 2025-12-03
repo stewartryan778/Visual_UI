@@ -13,11 +13,12 @@ window.addEventListener("DOMContentLoaded", () => {
       this.blend = "normal"; // normal | add | screen | multiply
       this.source = null;    // future video/image
       this.type = "shader";
-      this.visualMode = 0;   // 0..2
+      this.visualMode = 0;   // 0..4
       this.colorTheme = 0;   // 0..7
       this.offsetX = 0.0;
       this.offsetY = 0.0;
       this.audioPositionReact = false;
+      this.strobeIntensity = 0.0; // 0..1
     }
   }
 
@@ -27,6 +28,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const brightnessControl = document.getElementById("brightness");
 
   const audioReactSlider = document.getElementById("audioReact");
+
+  const tapTempoBtn = document.getElementById("tapTempoBtn");
+  const bpmDisplay = document.getElementById("bpmDisplay");
 
   const cameraZoomSlider = document.getElementById("cameraZoom");
   const cameraRotateSlider = document.getElementById("cameraRotate");
@@ -58,7 +62,7 @@ window.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // High-level mood / genre looks
+  // High-level mood / genre looks (using 0..4 visual modes)
   const moodPresets = {
     chill: {
       name: "Chill / Ambient",
@@ -66,7 +70,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.6,
       cameraZoom: 1.15,
       cameraRotateDeg: 0,
-      layerVisualModes: [0, 0, 1],
+      layerVisualModes: [0, 3, 1],          // Radial, Tunnel, Kaleido
       layerColorThemes: [0, 4],
       layerBlends: ["normal", "screen"]
     },
@@ -76,7 +80,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.6,
       cameraZoom: 0.85,
       cameraRotateDeg: 10,
-      layerVisualModes: [2, 1, 0],
+      layerVisualModes: [2, 4, 3],          // Swirl, Pixel, Tunnel
       layerColorThemes: [2, 3, 7],
       layerBlends: ["add", "screen", "add"]
     },
@@ -86,7 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.8,
       cameraZoom: 0.9,
       cameraRotateDeg: -8,
-      layerVisualModes: [2, 2, 1],
+      layerVisualModes: [2, 3, 4],          // Swirl, Tunnel, Pixel
       layerColorThemes: [5, 2],
       layerBlends: ["add", "multiply"]
     },
@@ -96,7 +100,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.1,
       cameraZoom: 1.0,
       cameraRotateDeg: 0,
-      layerVisualModes: [1, 1, 0],
+      layerVisualModes: [1, 3, 4],          // Kaleido, Tunnel, Pixel
       layerColorThemes: [3, 0],
       layerBlends: ["screen", "normal"]
     },
@@ -106,7 +110,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.5,
       cameraZoom: 1.2,
       cameraRotateDeg: 0,
-      layerVisualModes: [0, 1],
+      layerVisualModes: [0, 4],             // Radial, Pixel
       layerColorThemes: [4, 7],
       layerBlends: ["normal", "screen"]
     },
@@ -116,7 +120,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.4,
       cameraZoom: 0.95,
       cameraRotateDeg: 20,
-      layerVisualModes: [2, 1, 2],
+      layerVisualModes: [2, 3, 1],          // Swirl, Tunnel, Kaleido
       layerColorThemes: [2, 7, 3],
       layerBlends: ["add", "screen", "add"]
     }
@@ -202,7 +206,8 @@ window.addEventListener("DOMContentLoaded", () => {
         colorTheme: l.colorTheme,
         offsetX: l.offsetX,
         offsetY: l.offsetY,
-        audioPositionReact: l.audioPositionReact
+        audioPositionReact: l.audioPositionReact,
+        strobeIntensity: l.strobeIntensity
       }))
     };
   }
@@ -235,6 +240,7 @@ window.addEventListener("DOMContentLoaded", () => {
       l.offsetX = pl.offsetX ?? 0;
       l.offsetY = pl.offsetY ?? 0;
       l.audioPositionReact = !!pl.audioPositionReact;
+      l.strobeIntensity = pl.strobeIntensity ?? 0;
       layers.push(l);
     });
 
@@ -300,6 +306,41 @@ window.addEventListener("DOMContentLoaded", () => {
 
   autoSwitchIntervalSlider.addEventListener("input", () => {
     autoSwitchInterval = parseFloat(autoSwitchIntervalSlider.value || "20");
+  });
+
+  // Tap tempo / BPM
+  let bpm = 120;
+  let tapTimes = [];
+  let beatPhaseStart = performance.now();
+
+  function updateBpmDisplay() {
+    bpmDisplay.textContent = `${Math.round(bpm)} BPM`;
+  }
+  updateBpmDisplay();
+
+  tapTempoBtn.addEventListener("click", () => {
+    const now = performance.now();
+    if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
+      // too long since last tap -> reset
+      tapTimes = [];
+    }
+    tapTimes.push(now);
+    if (tapTimes.length > 6) {
+      tapTimes.shift();
+    }
+    if (tapTimes.length >= 2) {
+      let intervals = [];
+      for (let i = 1; i < tapTimes.length; i++) {
+        intervals.push(tapTimes[i] - tapTimes[i - 1]);
+      }
+      const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const newBpm = 60000 / avg; // ms -> BPM
+      if (!isNaN(newBpm) && newBpm > 40 && newBpm < 240) {
+        bpm = newBpm;
+        beatPhaseStart = now;
+        updateBpmDisplay();
+      }
+    }
   });
 
   // Apply mood / genre look
@@ -428,8 +469,10 @@ window.addEventListener("DOMContentLoaded", () => {
               <label>Visual Mode</label>
               <select id="layerVisualMode">
                 <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial Waves</option>
-                <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope</option>
+                <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleidoscope Grid</option>
                 <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl Orbit</option>
+                <option value="3" ${layer.visualMode === 3 ? "selected" : ""}>Tunnel Lines</option>
+                <option value="4" ${layer.visualMode === 4 ? "selected" : ""}>Pixel Mosaic</option>
               </select>
             </div>
 
@@ -488,6 +531,18 @@ window.addEventListener("DOMContentLoaded", () => {
               </label>
             </div>
 
+            <div class="control-row">
+              <label>Strobe / Flash</label>
+              <input
+                type="range"
+                id="layerStrobe"
+                min="0"
+                max="1"
+                step="0.01"
+                value="${layer.strobeIntensity}"
+              />
+            </div>
+
           </div>
         </details>
       </div>
@@ -500,6 +555,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const posXSlider = document.getElementById("layerPosX");
     const posYSlider = document.getElementById("layerPosY");
     const audioPosReactCheckbox = document.getElementById("layerAudioPosReact");
+    const strobeSlider = document.getElementById("layerStrobe");
 
     opacitySlider.addEventListener("input", e => {
       layer.opacity = parseFloat(e.target.value);
@@ -527,6 +583,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     audioPosReactCheckbox.addEventListener("change", e => {
       layer.audioPositionReact = e.target.checked;
+    });
+
+    strobeSlider.addEventListener("input", e => {
+      layer.strobeIntensity = parseFloat(e.target.value);
     });
   }
 
@@ -668,6 +728,8 @@ window.addEventListener("DOMContentLoaded", () => {
     uniform float u_rotate; // radians
     uniform float u_offsetX;
     uniform float u_offsetY;
+    uniform float u_strobe;
+    uniform float u_beatPhase;
 
     vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b * cos(6.28318 * (c * t + d));
@@ -746,11 +808,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
       vec3 color = vec3(0.0);
 
+      // MODE 0: Radial Waves
       if (u_mode < 0.5) {
         float w = sin(10.0 * r - t * (2.0 + u_bass * 6.0));
         float v = 0.5 + 0.5 * w;
         float pattern = v + 0.25 * sin(ang * 6.0 + t * (1.0 + u_mid * 3.0));
         color = palette(pattern + u_bass * 0.5, A, B, C, D);
+
+      // MODE 1: Kaleidoscope Grid
       } else if (u_mode < 1.5) {
         vec2 g = p;
         g = abs(g);
@@ -760,17 +825,45 @@ window.addEventListener("DOMContentLoaded", () => {
         float baseT = t * 0.25 + u_mid;
         vec3 baseCol = palette(baseT, A, B, C, D);
         color = baseCol + lines * pulse * 1.5;
-      } else {
+
+      // MODE 2: Swirl Orbit
+      } else if (u_mode < 2.5) {
         float swirl = sin(ang * 4.0 + r * 8.0 - t * (1.0 + u_bass * 4.0));
         float ring = exp(-r * 4.0) * (0.5 + 0.5 * swirl);
         float spark = 0.5 + 0.5 * sin((p.x + p.y) * 30.0 + t * (4.0 + u_high * 10.0));
         float baseT = u_bass * 0.8 + t * 0.1;
         vec3 baseCol = palette(baseT, A, B, C, D);
         color = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
+
+      // MODE 3: Tunnel Lines (audio-reactive tunnel)
+      } else if (u_mode < 3.5) {
+        vec2 q = p;
+        float depth = 1.0 / (0.3 + length(q));
+        float stripes = 0.5 + 0.5 * sin((q.y + t * (2.0 + u_bass * 6.0)) * 10.0);
+        float rings   = 0.5 + 0.5 * sin((length(q) - t * (1.0 + u_mid * 4.0)) * 8.0);
+        float m = mix(stripes, rings, 0.5 + 0.5 * u_high);
+        float tt = depth + m + u_bass * 0.6;
+        color = palette(tt, A, B, C, D) * depth * 1.8;
+
+      // MODE 4: Pixel Mosaic (chunky audio-reactive tiles)
+      } else {
+        float scale = 30.0 + u_high * 40.0;
+        vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
+        vec2 pix = floor((uv * aspect) * scale) / scale;
+        float cell = sin((pix.x + pix.y) * 20.0 + t * (3.0 + u_mid * 5.0));
+        float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0));
+        float tt = cell + pulse * 0.3 + u_bass * 0.5;
+        color = palette(tt, A, B, C, D);
       }
 
+      // Vignette
       float vignette = smoothstep(0.9, 0.3, r);
       color *= vignette;
+
+      // Beat-based strobe: sin on beatPhase, controlled by u_strobe
+      float beatPulse = 0.5 + 0.5 * sin(6.28318 * u_beatPhase);
+      float flash = mix(1.0, 0.3 + beatPulse * 1.7, u_strobe);
+      color *= flash;
 
       color *= u_brightness;
       gl_FragColor = vec4(color, u_opacity);
@@ -829,6 +922,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const uRotateLoc = gl.getUniformLocation(program, "u_rotate");
   const uOffsetXLoc = gl.getUniformLocation(program, "u_offsetX");
   const uOffsetYLoc = gl.getUniformLocation(program, "u_offsetY");
+  const uStrobeLoc = gl.getUniformLocation(program, "u_strobe");
+  const uBeatPhaseLoc = gl.getUniformLocation(program, "u_beatPhase");
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -873,10 +968,14 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Beat phase from tapped BPM
+    const beatSeconds = (now - beatPhaseStart) / 1000;
+    const beatPhase = beatSeconds * (bpm / 60.0); // cycles
+
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
 
-      // Set blend mode per layer
+      // Blend mode per layer
       switch (layer.blend) {
         case "add":
           gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -913,6 +1012,8 @@ window.addEventListener("DOMContentLoaded", () => {
       gl.uniform1f(uRotateLoc, rotateRad);
       gl.uniform1f(uOffsetXLoc, offX);
       gl.uniform1f(uOffsetYLoc, offY);
+      gl.uniform1f(uStrobeLoc, layer.strobeIntensity);
+      gl.uniform1f(uBeatPhaseLoc, beatPhase);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
