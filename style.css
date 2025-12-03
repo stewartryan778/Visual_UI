@@ -180,6 +180,34 @@ body {
   gap: 6px;
 }
 
+/* Tempo controls */
+#tempoControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+#tapTempoBtn {
+  flex: 1;
+  background: #333;
+  border: none;
+  color: #eee;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 4px;
+}
+#tapTempoBtn:hover {
+  background: #444;
+}
+
+#bpmDisplay {
+  font-size: 11px;
+  color: #ccc;
+}
+
 /* === PRESETS AREA === */
 #presetControls {
   display: flex;
