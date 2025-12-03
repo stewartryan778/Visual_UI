@@ -26,7 +26,25 @@
     </div>
   </div>
 
-  <!-- RIGHT PANEL: INSPECTOR -->
+  <!-- RIGHT PANEL: MEDIA (NOW MUSIC + PLAYLIST) -->
+  <div id="deckPanel">
+    <h2>Media Deck</h2>
+
+    <!-- AUDIO PLAYLIST INPUT -->
+    <label style="display:block; margin-bottom:4px;">Load Audio Files</label>
+    <input type="file" id="audioInput" accept="audio/*" multiple />
+
+    <audio
+      id="audioPlayer"
+      controls
+      style="width: 100%; margin-top: 8px;"
+    ></audio>
+
+    <h3 style="margin-top: 12px;">Playlist</h3>
+    <div id="deckGrid"></div>
+  </div>
+
+  <!-- BOTTOM PANEL: EFFECTS / INSPECTOR -->
   <div id="inspectorPanel">
     <h2>Inspector</h2>
     <div id="inspectorContent">
@@ -138,24 +156,6 @@
       step="1"
       value="20"
     />
-  </div>
-
-  <!-- BOTTOM PANEL: MEDIA DECK -->
-  <div id="deckPanel">
-    <h2>Media Deck</h2>
-
-    <!-- AUDIO PLAYLIST INPUT -->
-    <label style="display:block; margin-bottom:4px;">Load Audio Files</label>
-    <input type="file" id="audioInput" accept="audio/*" multiple />
-
-    <audio
-      id="audioPlayer"
-      controls
-      style="width: 100%; margin-top: 8px;"
-    ></audio>
-
-    <h3 style="margin-top: 12px;">Playlist</h3>
-    <div id="deckGrid"></div>
   </div>
 
 </div>
