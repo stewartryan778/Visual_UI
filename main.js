@@ -13,8 +13,11 @@ window.addEventListener("DOMContentLoaded", () => {
       this.blend = "normal"; // normal | add | screen | multiply
       this.source = null;    // future video/image
       this.type = "shader";
-      this.visualMode = 0;   // 0,1,2
-      this.colorTheme = 0;   // 0=cool,1=warm,2=neon
+      this.visualMode = 0;   // 0..2
+      this.colorTheme = 0;   // 0..7
+      this.offsetX = 0.0;
+      this.offsetY = 0.0;
+      this.audioPositionReact = false;
     }
   }
 
@@ -22,6 +25,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const addLayerBtn = document.getElementById("addLayerBtn");
   const inspectorContent = document.getElementById("inspectorContent");
   const brightnessControl = document.getElementById("brightness");
+
+  const audioReactSlider = document.getElementById("audioReact");
 
   const cameraZoomSlider = document.getElementById("cameraZoom");
   const cameraRotateSlider = document.getElementById("cameraRotate");
@@ -37,6 +42,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const savePresetBtn = document.getElementById("savePresetBtn");
   const loadPresetBtn = document.getElementById("loadPresetBtn");
   const deletePresetBtn = document.getElementById("deletePresetBtn");
+
+  const autoSwitchEnabledCheckbox = document.getElementById("autoSwitchEnabled");
+  const autoSwitchIntervalSlider = document.getElementById("autoSwitchInterval");
 
   if (
     !layerContainer ||
@@ -60,13 +68,13 @@ window.addEventListener("DOMContentLoaded", () => {
     cameraRotateDeg = parseFloat(cameraRotateSlider.value || "0");
   });
 
-  // Logo state (including size)
+  // Logo state (text + size)
   let logoSize = parseFloat(logoSizeSlider.value || "18");
 
   function updateLogoDisplay() {
     logoTextDisplay.textContent = logoTextInput.value || "";
     overlayHud.style.display = logoVisibleCheckbox.checked ? "block" : "none";
-    logoTextDisplay.style.fontSize = logoSize + "px";
+    overlayHud.style.fontSize = logoSize + "px";
   }
 
   logoTextInput.addEventListener("input", updateLogoDisplay);
@@ -116,6 +124,7 @@ window.addEventListener("DOMContentLoaded", () => {
       brightness: parseFloat(brightnessControl.value || "0.5"),
       cameraZoom,
       cameraRotateDeg,
+      audioReact: parseFloat(audioReactSlider.value || "1"),
       logoText: logoTextInput.value || "",
       logoVisible: !!logoVisibleCheckbox.checked,
       logoSize: logoSize,
@@ -124,7 +133,10 @@ window.addEventListener("DOMContentLoaded", () => {
         opacity: l.opacity,
         blend: l.blend,
         visualMode: l.visualMode,
-        colorTheme: l.colorTheme
+        colorTheme: l.colorTheme,
+        offsetX: l.offsetX,
+        offsetY: l.offsetY,
+        audioPositionReact: l.audioPositionReact
       }))
     };
   }
@@ -137,6 +149,8 @@ window.addEventListener("DOMContentLoaded", () => {
     cameraRotateDeg = preset.cameraRotateDeg ?? 0;
     cameraZoomSlider.value = String(cameraZoom);
     cameraRotateSlider.value = String(cameraRotateDeg);
+
+    audioReactSlider.value = String(preset.audioReact ?? 1);
 
     logoTextInput.value = preset.logoText ?? "";
     logoVisibleCheckbox.checked = !!preset.logoVisible;
@@ -152,6 +166,9 @@ window.addEventListener("DOMContentLoaded", () => {
       l.blend = pl.blend ?? "normal";
       l.visualMode = pl.visualMode ?? 0;
       l.colorTheme = pl.colorTheme ?? 0;
+      l.offsetX = pl.offsetX ?? 0;
+      l.offsetY = pl.offsetY ?? 0;
+      l.audioPositionReact = !!pl.audioPositionReact;
       layers.push(l);
     });
 
@@ -202,6 +219,22 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   loadPresetsFromStorage();
+
+  // Auto scene switching
+  let autoSwitchEnabled = false;
+  let autoSwitchInterval = parseFloat(autoSwitchIntervalSlider.value || "20");
+  let autoSwitchIndex = 0;
+  let lastSwitchTime = performance.now();
+
+  autoSwitchEnabledCheckbox.addEventListener("change", () => {
+    autoSwitchEnabled = autoSwitchEnabledCheckbox.checked;
+    lastSwitchTime = performance.now();
+    autoSwitchIndex = 0;
+  });
+
+  autoSwitchIntervalSlider.addEventListener("input", () => {
+    autoSwitchInterval = parseFloat(autoSwitchIntervalSlider.value || "20");
+  });
 
   // ----- Layer UI -----
 
@@ -293,6 +326,11 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="0" ${layer.colorTheme === 0 ? "selected" : ""}>Cool</option>
           <option value="1" ${layer.colorTheme === 1 ? "selected" : ""}>Warm</option>
           <option value="2" ${layer.colorTheme === 2 ? "selected" : ""}>Neon</option>
+          <option value="3" ${layer.colorTheme === 3 ? "selected" : ""}>Cyber Grid</option>
+          <option value="4" ${layer.colorTheme === 4 ? "selected" : ""}>Sunset</option>
+          <option value="5" ${layer.colorTheme === 5 ? "selected" : ""}>Toxic Green</option>
+          <option value="6" ${layer.colorTheme === 6 ? "selected" : ""}>Ice Laser</option>
+          <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
         </select>
 
         <label style="margin-top:6px;">Blend Mode</label>
@@ -302,6 +340,31 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="screen" ${layer.blend === "screen" ? "selected" : ""}>Screen</option>
           <option value="multiply" ${layer.blend === "multiply" ? "selected" : ""}>Multiply</option>
         </select>
+
+        <label style="margin-top:6px;">Position X</label>
+        <input
+          type="range"
+          id="layerPosX"
+          min="-1"
+          max="1"
+          step="0.01"
+          value="${layer.offsetX}"
+        />
+
+        <label style="margin-top:4px;">Position Y</label>
+        <input
+          type="range"
+          id="layerPosY"
+          min="-1"
+          max="1"
+          step="0.01"
+          value="${layer.offsetY}"
+        />
+
+        <label style="margin-top:4px; display:block;">
+          <input type="checkbox" id="layerAudioPosReact" ${layer.audioPositionReact ? "checked" : ""} />
+          Audio-reactive position (bass wobble)
+        </label>
       </details>
     `;
 
@@ -309,6 +372,9 @@ window.addEventListener("DOMContentLoaded", () => {
     const modeSelect = document.getElementById("layerVisualMode");
     const themeSelect = document.getElementById("layerColorTheme");
     const blendSelect = document.getElementById("layerBlendMode");
+    const posXSlider = document.getElementById("layerPosX");
+    const posYSlider = document.getElementById("layerPosY");
+    const audioPosReactCheckbox = document.getElementById("layerAudioPosReact");
 
     opacitySlider.addEventListener("input", e => {
       layer.opacity = parseFloat(e.target.value);
@@ -324,6 +390,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
     blendSelect.addEventListener("change", e => {
       layer.blend = e.target.value;
+    });
+
+    posXSlider.addEventListener("input", e => {
+      layer.offsetX = parseFloat(e.target.value);
+    });
+
+    posYSlider.addEventListener("input", e => {
+      layer.offsetY = parseFloat(e.target.value);
+    });
+
+    audioPosReactCheckbox.addEventListener("change", e => {
+      layer.audioPositionReact = e.target.checked;
     });
   }
 
@@ -463,6 +541,8 @@ window.addEventListener("DOMContentLoaded", () => {
     uniform float u_theme;
     uniform float u_zoom;
     uniform float u_rotate; // radians
+    uniform float u_offsetX;
+    uniform float u_offsetY;
 
     vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b * cos(6.28318 * (c * t + d));
@@ -477,6 +557,8 @@ window.addEventListener("DOMContentLoaded", () => {
       float sa = sin(u_rotate);
       p = mat2(ca, -sa, sa, ca) * p;
 
+      p += vec2(u_offsetX, u_offsetY);
+
       float r = length(p);
       float ang = atan(p.y, p.x);
       float t = u_time;
@@ -485,21 +567,56 @@ window.addEventListener("DOMContentLoaded", () => {
       vec3 B;
       vec3 C;
       vec3 D;
+
+      // 8 color themes
       if (u_theme < 0.5) {
-        A = vec3(0.15, 0.18, 0.25);
-        B = vec3(0.5, 0.6, 0.9);
-        C = vec3(0.3, 0.4, 0.7);
-        D = vec3(0.0, 0.3, 0.7);
+        // 0: COOL
+        A = vec3(0.13, 0.18, 0.25);
+        B = vec3(0.3, 0.6, 1.0);
+        C = vec3(0.35, 0.45, 0.75);
+        D = vec3(0.2, 0.4, 0.9);
       } else if (u_theme < 1.5) {
-        A = vec3(0.20, 0.14, 0.10);
-        B = vec3(0.9, 0.6, 0.3);
-        C = vec3(0.5, 0.3, 0.2);
-        D = vec3(0.1, 0.2, 0.3);
-      } else {
+        // 1: WARM
+        A = vec3(0.22, 0.14, 0.10);
+        B = vec3(1.0, 0.5, 0.1);
+        C = vec3(0.5, 0.25, 0.1);
+        D = vec3(0.15, 0.05, 0.0);
+      } else if (u_theme < 2.5) {
+        // 2: NEON
         A = vec3(0.05, 0.05, 0.10);
-        B = vec3(1.0, 0.8, 1.2);
+        B = vec3(1.0, 0.2, 1.4);
         C = vec3(0.7, 0.4, 0.9);
-        D = vec3(0.1, 0.4, 0.9);
+        D = vec3(0.2, 0.4, 1.0);
+      } else if (u_theme < 3.5) {
+        // 3: CYBER GRID
+        A = vec3(0.05, 0.20, 0.08);
+        B = vec3(0.1, 1.0, 0.5);
+        C = vec3(0.3, 0.8, 0.5);
+        D = vec3(0.0, 0.4, 0.1);
+      } else if (u_theme < 4.5) {
+        // 4: SUNSET
+        A = vec3(0.4, 0.1, 0.2);
+        B = vec3(1.0, 0.6, 0.3);
+        C = vec3(0.9, 0.3, 0.5);
+        D = vec3(0.3, 0.1, 0.5);
+      } else if (u_theme < 5.5) {
+        // 5: TOXIC GREEN
+        A = vec3(0.0, 0.2, 0.05);
+        B = vec3(0.7, 1.0, 0.1);
+        C = vec3(0.3, 0.9, 0.1);
+        D = vec3(0.1, 0.4, 0.0);
+      } else if (u_theme < 6.5) {
+        // 6: ICE LASER
+        A = vec3(0.05, 0.08, 0.15);
+        B = vec3(0.3, 0.8, 1.5);
+        C = vec3(0.2, 0.6, 1.0);
+        D = vec3(0.0, 0.3, 0.9);
+      } else {
+        // 7: VAPORWAVE
+        A = vec3(0.15, 0.07, 0.20);
+        B = vec3(0.9, 0.4, 1.2);
+        C = vec3(0.4, 0.3, 0.9);
+        D = vec3(0.1, 0.8, 0.9);
       }
 
       vec3 color = vec3(0.0);
@@ -585,6 +702,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const uThemeLoc = gl.getUniformLocation(program, "u_theme");
   const uZoomLoc = gl.getUniformLocation(program, "u_zoom");
   const uRotateLoc = gl.getUniformLocation(program, "u_rotate");
+  const uOffsetXLoc = gl.getUniformLocation(program, "u_offsetX");
+  const uOffsetYLoc = gl.getUniformLocation(program, "u_offsetY");
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -614,7 +733,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const now = performance.now();
     const t = (now - startTime) * 0.001;
 
-    const { bass, mid, high } = getBands();
+    let { bass, mid, high } = getBands();
+    const react = parseFloat(audioReactSlider.value || "1");
+
+    // scale audio by react knob
+    let bassR = Math.min(1, bass * react);
+    let midR  = Math.min(1, mid  * react);
+    let highR = Math.min(1, high * react);
+
     const brightness = parseFloat(brightnessControl.value || "0.5");
 
     gl.clearColor(0, 0, 0, 1);
@@ -623,22 +749,48 @@ window.addEventListener("DOMContentLoaded", () => {
     const zoom = cameraZoom;
     const rotateRad = (cameraRotateDeg * Math.PI) / 180.0;
 
+    // Audio-reactive logo glow & scale
+    const logoGlow = 0.25 + bassR * 0.6;
+    const logoScale = 1 + bassR * 0.25;
+    overlayHud.style.backgroundColor = `rgba(0,0,0,${logoGlow})`;
+    overlayHud.style.transform = `translateX(-50%) scale(${logoScale})`;
+
+    // Auto scene switching
+    if (autoSwitchEnabled && presets.length > 0) {
+      const elapsedSec = (now - lastSwitchTime) / 1000;
+      if (elapsedSec >= autoSwitchInterval) {
+        autoSwitchIndex = (autoSwitchIndex + 1) % presets.length;
+        applyPreset(presets[autoSwitchIndex]);
+        lastSwitchTime = now;
+      }
+    }
+
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
 
       setBlendMode(layer.blend);
 
+      // Position, with optional audio wobble
+      let offX = layer.offsetX || 0;
+      let offY = layer.offsetY || 0;
+      if (layer.audioPositionReact) {
+        offX += (bassR - 0.5) * 0.5;
+        offY += (highR - 0.5) * 0.5;
+      }
+
       gl.uniform1f(uTimeLoc, t);
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
-      gl.uniform1f(uBassLoc, bass);
-      gl.uniform1f(uMidLoc, mid);
-      gl.uniform1f(uHighLoc, high);
+      gl.uniform1f(uBassLoc, bassR);
+      gl.uniform1f(uMidLoc, midR);
+      gl.uniform1f(uHighLoc, highR);
       gl.uniform1f(uBrightLoc, brightness);
       gl.uniform1f(uOpacityLoc, layer.opacity);
       gl.uniform1f(uModeLoc, layer.visualMode);
       gl.uniform1f(uThemeLoc, layer.colorTheme);
       gl.uniform1f(uZoomLoc, zoom);
       gl.uniform1f(uRotateLoc, rotateRad);
+      gl.uniform1f(uOffsetXLoc, offX);
+      gl.uniform1f(uOffsetYLoc, offY);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
