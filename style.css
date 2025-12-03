@@ -63,6 +63,8 @@ body {
 
 /* === CENTER: STAGE === */
 #stageWrapper {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
   background: #000;
   border-left: 2px solid #222;
@@ -95,12 +97,59 @@ body {
   color: #f3f3f3;
 }
 
-/* === RIGHT: INSPECTOR PANEL === */
+/* === RIGHT: MEDIA / MUSIC PANEL === */
+#deckPanel {
+  grid-column: 3;
+  grid-row: 1;
+  background: #181818;
+  padding: 12px;
+  border-left: 2px solid #222;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+#deckPanel h2 {
+  font-size: 14px;
+  margin: 0 0 6px 0;
+}
+
+#deckGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.deckItem {
+  padding: 6px 10px;
+  background: #222;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #333;
+}
+
+.deckItem:hover {
+  background: #333;
+}
+
+.deckItem.active {
+  border-color: #4aa3ff;
+}
+
+/* === BOTTOM: INSPECTOR / EFFECTS PANEL === */
 #inspectorPanel {
+  grid-column: 1 / span 3;
+  grid-row: 2;
   background: #181818;
   padding: 12px;
   overflow-y: auto;
   min-height: 0;
+  border-top: 2px solid #222;
 }
 
 #inspectorPanel h2 {
@@ -206,59 +255,6 @@ body {
 #bpmDisplay {
   font-size: 11px;
   color: #ccc;
-}
-
-/* === PRESETS AREA === */
-#presetControls {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-#presetControls input[type="text"] {
-  flex: 1;
-}
-
-/* === BOTTOM: MEDIA DECK === */
-#deckPanel {
-  grid-column: 1 / span 3;
-  background: #131313;
-  padding: 12px;
-  border-top: 2px solid #222;
-  overflow-x: auto;
-}
-
-#deckPanel h2 {
-  font-size: 14px;
-  margin: 0 0 6px 0;
-}
-
-#deckGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.deckItem {
-  padding: 6px 10px;
-  background: #222;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border: 1px solid #333;
-}
-
-.deckItem:hover {
-  background: #333;
-}
-
-.deckItem.active {
-  border-color: #4aa3ff;
 }
 
 /* Generic form tweaks */
