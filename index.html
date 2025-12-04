@@ -26,11 +26,13 @@
     </div>
   </div>
 
-  <!-- RIGHT PANEL: MEDIA + QUICK EFFECTS -->
+  <!-- RIGHT PANEL: MEDIA + PERFORMANCE + QUICK FX -->
   <div id="deckPanel">
-    <h2>Media</h2>
+    <h2>Performance Panel</h2>
 
+    <!-- MEDIA -->
     <div class="section">
+      <h3>Media</h3>
       <label class="field-label">Load Audio Files</label>
       <input type="file" id="audioInput" accept="audio/*" multiple />
 
@@ -41,11 +43,70 @@
       ></audio>
     </div>
 
+    <!-- AUDIO METERS -->
     <div class="section">
-      <h3>Playlist</h3>
-      <div id="deckGrid"></div>
+      <h3>Audio Meters</h3>
+      <canvas id="meterCanvas" width="260" height="60"></canvas>
     </div>
 
+    <!-- PERFORMANCE MACROS + LAYER MUTES + AUTO SWITCH -->
+    <div class="section">
+      <h3>Performance</h3>
+
+      <label class="field-label" for="macroEnergy">Energy</label>
+      <input
+        type="range"
+        id="macroEnergy"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+
+      <label class="field-label" for="macroMotion">Motion</label>
+      <input
+        type="range"
+        id="macroMotion"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+
+      <label class="field-label" for="macroDetail">Detail</label>
+      <input
+        type="range"
+        id="macroDetail"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+
+      <div class="subsection">
+        <h4>Layer Mutes</h4>
+        <div id="layerMuteRow"></div>
+      </div>
+
+      <div class="subsection">
+        <h4>Auto Scene Switch</h4>
+        <label class="checkbox-row">
+          <input type="checkbox" id="autoSwitchEnabled" />
+          Enable Auto Switch
+        </label>
+        <label class="field-label" for="autoSwitchInterval">Interval (seconds)</label>
+        <input
+          type="range"
+          id="autoSwitchInterval"
+          min="5"
+          max="60"
+          step="1"
+          value="20"
+        />
+      </div>
+    </div>
+
+    <!-- QUICK EFFECTS FOR SELECTED LAYER -->
     <div class="section">
       <h3>Quick Effects</h3>
       <div id="quickEffects">
@@ -169,23 +230,6 @@
             <button id="tapTempoBtn">Tap Tempo</button>
             <span id="bpmDisplay">-- BPM</span>
           </div>
-        </div>
-
-        <div class="global-group">
-          <h3>Auto Scene Switch</h3>
-          <label class="checkbox-row">
-            <input type="checkbox" id="autoSwitchEnabled" />
-            Enable Auto Switch
-          </label>
-          <label for="autoSwitchInterval">Interval (seconds)</label>
-          <input
-            type="range"
-            id="autoSwitchInterval"
-            min="5"
-            max="60"
-            step="1"
-            value="20"
-          />
         </div>
 
         <div class="global-group">
