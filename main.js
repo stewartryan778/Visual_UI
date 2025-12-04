@@ -1166,23 +1166,36 @@ window.addEventListener("DOMContentLoaded", () => {
     const t = (now - startTime) * 0.001;
 
     let { bass, mid, high } = getBands();
-    const baseReact = parseFloat(audioReactSlider.value || "1");
 
-    // Apply Energy macro to audio reactivity
-    const reactScale = 0.5 + macroEnergy * 1.5;
-    let react = baseReact * reactScale;
+// Slider 0–2 → baseReact ~0.3–2.0
+let ar = parseFloat(audioReactSlider.value || "1");
+let baseReact = 0.3 + ar * 0.85;
 
-    let bassR = Math.min(1, bass * react);
-    let midR  = Math.min(1, mid  * react);
-    let highR = Math.min(1, high * react);
+// Energy macro: 0–1 → factor 0.7–1.4
+let energyFactor = 0.7 + macroEnergy * 0.7;
 
-    // Detail macro: emphasize highs / presence
-    const detailBoost = 0.7 + macroDetail * 1.3;
-    highR = Math.min(1, highR * detailBoost);
+// Raw intensity, then soft-compress so it never totally flattens
+let reactRaw = baseReact * energyFactor;
+let react = reactRaw / (1.0 + 0.7 * reactRaw); // stays ~0–1-ish
 
-    // Brightness macro
-    const baseBrightness = parseFloat(brightnessControl.value || "0.5");
-    const brightness = baseBrightness * (0.7 + macroEnergy * 0.8);
+// Apply to bands
+let bassR = bass * react;
+let midR  = mid  * react;
+let highR = high * react;
+
+// Detail macro: emphasize highs / presence
+let detailBoost = 0.8 + macroDetail * 1.4;
+highR *= detailBoost;
+
+// Clamp 0–1 so shader math stays sane
+bassR = Math.min(1, bassR);
+midR  = Math.min(1, midR);
+highR = Math.min(1, highR);
+
+// Brightness macro (same as before)
+const baseBrightness = parseFloat(brightnessControl.value || "0.5");
+const brightness = baseBrightness * (0.7 + macroEnergy * 0.8);
+
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
