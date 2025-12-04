@@ -395,3 +395,61 @@ input[type="file"] {
 audio {
   background: #111;
 }
+
+/* ===== Layer header, badges, swatches, and opacity sliders ===== */
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.layer-kind-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.layer-kind--shader {
+  background: rgba(80, 120, 255, 0.15);
+}
+
+.layer-kind--object {
+  background: rgba(255, 160, 80, 0.15);
+}
+
+.layer-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.layer-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-opacity-row {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+
+.layer-opacity-row input[type="range"] {
+  flex: 1;
+}
+
+/* Drag feedback */
+.layer.dragging {
+  opacity: 0.6;
+  outline: 1px dashed #4aa3ff;
+}
