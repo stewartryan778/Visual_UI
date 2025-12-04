@@ -54,6 +54,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const autoSwitchEnabledCheckbox = document.getElementById("autoSwitchEnabled");
   const autoSwitchIntervalSlider = document.getElementById("autoSwitchInterval");
 
+  // New: right panel performance controls
+  const meterCanvas = document.getElementById("meterCanvas");
+  const macroEnergySlider = document.getElementById("macroEnergy");
+  const macroMotionSlider = document.getElementById("macroMotion");
+  const macroDetailSlider = document.getElementById("macroDetail");
+  const layerMuteRow = document.getElementById("layerMuteRow");
+
   if (
     !layerContainer ||
     !addLayerBtn ||
@@ -347,7 +354,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Apply mood / genre look
+  // Mood selector
   if (moodSelect) {
     moodSelect.addEventListener("change", () => {
       const id = moodSelect.value;
@@ -385,9 +392,42 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ----- Macro sliders -----
+  let macroEnergy = parseFloat(macroEnergySlider.value || "0.5");
+  let macroMotion = parseFloat(macroMotionSlider.value || "0.5");
+  let macroDetail = parseFloat(macroDetailSlider.value || "0.5");
+
+  macroEnergySlider.addEventListener("input", () => {
+    macroEnergy = parseFloat(macroEnergySlider.value || "0.5");
+  });
+  macroMotionSlider.addEventListener("input", () => {
+    macroMotion = parseFloat(macroMotionSlider.value || "0.5");
+  });
+  macroDetailSlider.addEventListener("input", () => {
+    macroDetail = parseFloat(macroDetailSlider.value || "0.5");
+  });
+
   // ----- Layer UI -----
 
+  function visualModeName(mode) {
+    switch (mode | 0) {
+      case 0: return "Radial";
+      case 1: return "Kaleido";
+      case 2: return "Swirl";
+      case 3: return "Tunnel";
+      case 4: return "Pixel";
+      case 5: return "Orbit";
+      case 6: return "Bars";
+      case 7: return "Stars";
+      default: return "FX";
+    }
+  }
+
   function addLayer(layer) {
+    if (layers.length >= 4) {
+      alert("Limiting to 4 layers for now.");
+      return;
+    }
     layers.push(layer);
     if (selectedLayer === null) selectedLayer = 0;
     updateLayerUI();
@@ -401,6 +441,26 @@ window.addEventListener("DOMContentLoaded", () => {
     addLayer(new Layer());
   });
 
+  function updateLayerMuteRow() {
+    if (!layerMuteRow) return;
+    layerMuteRow.innerHTML = "";
+
+    layers.forEach((layer, index) => {
+      if (index >= 4) return; // hard cap in UI
+      const btn = document.createElement("button");
+      btn.className = "layerMuteBtn";
+      if (!layer.enabled) btn.classList.add("muted");
+      if (selectedLayer === index) btn.classList.add("selected");
+      btn.textContent = `L${index + 1}`;
+      btn.title = layer.enabled ? "Click to mute" : "Click to unmute";
+      btn.addEventListener("click", () => {
+        layer.enabled = !layer.enabled;
+        updateLayerUI();
+      });
+      layerMuteRow.appendChild(btn);
+    });
+  }
+
   function updateLayerUI() {
     layerContainer.innerHTML = "";
 
@@ -409,8 +469,19 @@ window.addEventListener("DOMContentLoaded", () => {
       div.className = "layer";
       if (selectedLayer === index) div.classList.add("active");
 
+      const modeLabel = visualModeName(layer.visualMode);
+
       div.innerHTML = `
-        <strong>Layer ${index + 1}</strong>
+        <div class="layer-header">
+          <span class="layer-title">Layer ${index + 1}</span>
+          <span class="layer-kind-pill ${layer.kind === "object" ? "kind-object" : "kind-shader"}">
+            ${layer.kind === "object" ? "OBJ" : "BG"}
+          </span>
+        </div>
+        <div class="layer-meta">
+          <span class="layer-color-dot theme-${layer.colorTheme}"></span>
+          <span class="layer-meta-text">${modeLabel}</span>
+        </div>
         <div class="layer-controls">
           <button data-action="mute" data-index="${index}">
             ${layer.enabled ? "Mute" : "Unmute"}
@@ -439,6 +510,8 @@ window.addEventListener("DOMContentLoaded", () => {
         }
       });
     });
+
+    updateLayerMuteRow();
   }
 
   function updateInspector() {
@@ -578,6 +651,7 @@ window.addEventListener("DOMContentLoaded", () => {
     kindSelect.addEventListener("change", e => {
       layer.kind = e.target.value;
       updateQuickEffects();
+      updateLayerUI();
     });
 
     opacitySlider.addEventListener("input", e => {
@@ -587,11 +661,13 @@ window.addEventListener("DOMContentLoaded", () => {
     modeSelect.addEventListener("change", e => {
       layer.visualMode = parseInt(e.target.value, 10);
       updateQuickEffects();
+      updateLayerUI();
     });
 
     themeSelect.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
       updateQuickEffects();
+      updateLayerUI();
     });
 
     blendSelect.addEventListener("change", e => {
@@ -675,11 +751,13 @@ window.addEventListener("DOMContentLoaded", () => {
     qeMode.addEventListener("change", e => {
       layer.visualMode = parseInt(e.target.value, 10);
       updateInspector();
+      updateLayerUI();
     });
 
     qeTheme.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
       updateInspector();
+      updateLayerUI();
     });
 
     qeStrobe.addEventListener("input", e => {
@@ -1007,7 +1085,6 @@ window.addEventListener("DOMContentLoaded", () => {
         color = mix(bg, fx, 0.9);
         alpha = u_opacity;
       } else {
-        // Object overlay: no bg, alpha from intensity
         color = fx;
         float intensity = clamp((fx.r + fx.g + fx.b) / 3.0, 0.0, 1.0);
         alpha = u_opacity * intensity;
@@ -1079,6 +1156,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let startTime = performance.now();
 
+  // Meter canvas ctx
+  const meterCtx = meterCanvas ? meterCanvas.getContext("2d") : null;
+
   function render() {
     resizeCanvas();
 
@@ -1086,20 +1166,35 @@ window.addEventListener("DOMContentLoaded", () => {
     const t = (now - startTime) * 0.001;
 
     let { bass, mid, high } = getBands();
-    const react = parseFloat(audioReactSlider.value || "1");
+    const baseReact = parseFloat(audioReactSlider.value || "1");
+
+    // Apply Energy macro to audio reactivity
+    const reactScale = 0.5 + macroEnergy * 1.5;
+    let react = baseReact * reactScale;
 
     let bassR = Math.min(1, bass * react);
     let midR  = Math.min(1, mid  * react);
     let highR = Math.min(1, high * react);
 
-    const brightness = parseFloat(brightnessControl.value || "0.5");
+    // Detail macro: emphasize highs / presence
+    const detailBoost = 0.7 + macroDetail * 1.3;
+    highR = Math.min(1, highR * detailBoost);
+
+    // Brightness macro
+    const baseBrightness = parseFloat(brightnessControl.value || "0.5");
+    const brightness = baseBrightness * (0.7 + macroEnergy * 0.8);
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const zoom = cameraZoom;
-    const rotateRad = (cameraRotateDeg * Math.PI) / 180.0;
+    // Motion macro: wobble camera a bit
+    const motionAmt = macroMotion * 0.25;
+    const wobble = (bassR - 0.5) * motionAmt;
+    const zoom = cameraZoom * (1.0 - wobble);
+    const rotateRad = (cameraRotateDeg * Math.PI) / 180.0 +
+      motionAmt * (midR - highR) * 1.5;
 
+    // Logo wobble
     const logoGlow = 0.25 + bassR * 0.6;
     const logoScale = 1 + bassR * 0.25;
     overlayHud.style.backgroundColor = `rgba(0,0,0,${logoGlow})`;
@@ -1116,6 +1211,36 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const beatSeconds = (now - beatPhaseStart) / 1000;
     const beatPhase = beatSeconds * (bpm / 60.0);
+
+    // Draw simple meters on right panel
+    if (meterCtx && meterCanvas) {
+      const w = meterCanvas.clientWidth || meterCanvas.width;
+      const h = meterCanvas.clientHeight || meterCanvas.height;
+      if (meterCanvas.width !== w) meterCanvas.width = w;
+      if (meterCanvas.height !== h) meterCanvas.height = h;
+
+      meterCtx.clearRect(0, 0, w, h);
+      const barW = w / 6;
+      const maxH = h - 6;
+
+      function drawBar(i, value, label) {
+        const x = 3 + i * (barW + 6);
+        const barHeight = value * maxH;
+        const y = h - barHeight - 3;
+        meterCtx.fillStyle = "#222";
+        meterCtx.fillRect(x, 3, barW, maxH);
+        meterCtx.fillStyle = i === 0 ? "#4caf50" : i === 1 ? "#ff9800" : "#03a9f4";
+        meterCtx.fillRect(x, y, barW, barHeight);
+        meterCtx.fillStyle = "#bbb";
+        meterCtx.font = "9px Arial";
+        meterCtx.textAlign = "center";
+        meterCtx.fillText(label, x + barW / 2, h - 2);
+      }
+
+      drawBar(0, bassR, "BASS");
+      drawBar(1, midR, "MID");
+      drawBar(2, highR, "HIGH");
+    }
 
     layers.forEach(layer => {
       if (!layer.enabled || layer.opacity <= 0) return;
@@ -1138,8 +1263,9 @@ window.addEventListener("DOMContentLoaded", () => {
       let offX = layer.offsetX || 0;
       let offY = layer.offsetY || 0;
       if (layer.audioPositionReact) {
-        offX += (bassR - 0.5) * 0.5;
-        offY += (highR - 0.5) * 0.5;
+        const posScale = 0.5 + macroMotion; // motion macro also affects wobble
+        offX += (bassR - 0.5) * 0.5 * posScale;
+        offY += (highR - 0.5) * 0.5 * posScale;
       }
 
       gl.uniform1f(uTimeLoc, t);
@@ -1155,7 +1281,10 @@ window.addEventListener("DOMContentLoaded", () => {
       gl.uniform1f(uRotateLoc, rotateRad);
       gl.uniform1f(uOffsetXLoc, offX);
       gl.uniform1f(uOffsetYLoc, offY);
-      gl.uniform1f(uStrobeLoc, layer.strobeIntensity);
+
+      // Energy macro also pushes strobe
+      const strobeEffective = layer.strobeIntensity * (0.5 + macroEnergy * 0.8);
+      gl.uniform1f(uStrobeLoc, strobeEffective);
       gl.uniform1f(uBeatPhaseLoc, beatPhase);
       gl.uniform1f(uKindLoc, layer.kind === "object" ? 1.0 : 0.0);
 
