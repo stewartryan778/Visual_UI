@@ -499,3 +499,110 @@ input[type="file"] {
 audio {
   background: #111;
 }
+
+/* --- SHINY / METALLIC SKIN OVERRIDES --- */
+
+/* Dark chrome background with vignette */
+body {
+  background: radial-gradient(circle at top, #252525 0, #050505 55%, #000 100%);
+}
+
+/* Panels get a brushed-metal style */
+#layersPanel,
+#deckPanel,
+#inspectorPanel {
+  background: radial-gradient(circle at 0 0, #2a2a2a 0, #151515 55%, #050505 100%);
+  border-color: #444;
+  box-shadow:
+    0 0 18px rgba(0, 0, 0, 0.8) inset,
+    0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+/* Section cards inside panels pop a bit more */
+.global-group,
+#quickEffects,
+#inspectorContent details {
+  background: linear-gradient(145deg, #1f1f1f 0%, #121212 100%);
+  border-color: #3b3b3b;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.7) inset;
+}
+
+/* Gold accent color */
+:root {
+  --accent-gold: #f4c45c;
+}
+
+/* Titles with a subtle silver → gold sheen */
+#deckPanel h2,
+#layersPanel h2,
+#inspectorLeft h2,
+#inspectorRight h2 {
+  background: linear-gradient(120deg, #f0f0f0, #c9c9c9, var(--accent-gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Active items outlined in gold */
+.layer.active,
+.deckItem.active {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(244, 196, 92, 0.5);
+}
+
+/* Kind pills: silver for BG, gold for OBJ */
+.kind-shader {
+  background: linear-gradient(145deg, #4f5b66, #2c3136);
+  color: #dde2e7;
+  border-color: #75818b;
+}
+
+.kind-object {
+  background: radial-gradient(circle at 30% 0, #ffe7a0, #b27a1f);
+  color: #1a1205;
+  border-color: #f4c45c;
+}
+
+/* Layer mute buttons: metallic with gold highlight on selected */
+.layerMuteBtn {
+  background: linear-gradient(145deg, #333, #1c1c1c);
+  border-color: #555;
+}
+.layerMuteBtn.selected {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 6px rgba(244, 196, 92, 0.6);
+}
+.layerMuteBtn.muted {
+  opacity: 0.35;
+}
+
+/* Buttons in general get a metallic finish */
+#addLayerBtn,
+#tapTempoBtn,
+#presetControls button,
+.preset-buttons button,
+.deckItem {
+  background: linear-gradient(145deg, #3a3a3a, #202020);
+  border: 1px solid #555;
+}
+#addLayerBtn:hover,
+#tapTempoBtn:hover,
+#presetControls button:hover,
+.preset-buttons button:hover,
+.deckItem:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 6px rgba(244, 196, 92, 0.4);
+}
+
+/* Sliders use gold accent (modern browsers) */
+input[type="range"] {
+  accent-color: var(--accent-gold);
+}
+
+/* Logo HUD gets a subtle chrome frame */
+#overlayHud {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 12px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(244, 196, 92, 0.3);
+}
