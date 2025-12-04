@@ -2,97 +2,202 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Music Visualizer UI</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Music Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div id="layout">
 
-  <!-- LEFT: Layers -->
+  <!-- LEFT PANEL: LAYERS -->
   <div id="layersPanel">
     <h2>Layers</h2>
     <div id="layerContainer"></div>
     <button id="addLayerBtn">+ Add Layer</button>
   </div>
 
-  <!-- CENTER: Stage -->
+  <!-- CENTER: STAGE -->
   <div id="stageWrapper">
     <canvas id="stage"></canvas>
+
+    <!-- TEXT / LOGO OVERLAY -->
     <div id="overlayHud">
-      <span id="logoTextDisplay">Artist / Track</span>
+      <span id="logoTextDisplay">Your Logo</span>
     </div>
   </div>
 
-  <!-- RIGHT: Media / Clips -->
+  <!-- RIGHT PANEL: MEDIA + QUICK EFFECTS -->
   <div id="deckPanel">
-    <h2>Media & Effects</h2>
+    <h2>Media</h2>
 
     <div class="section">
-      <label class="field-label">Audio File</label>
-      <input type="file" id="audioFileInput" accept="audio/*">
-      <audio id="audioPlayer" controls></audio>
+      <label class="field-label">Load Audio Files</label>
+      <input type="file" id="audioInput" accept="audio/*" multiple />
+
+      <audio
+        id="audioPlayer"
+        controls
+        style="width: 100%; margin-top: 8px;"
+      ></audio>
     </div>
 
     <div class="section">
-      <h3>Shading Clips</h3>
+      <h3>Playlist</h3>
       <div id="deckGrid"></div>
     </div>
 
     <div class="section">
-      <h3>Quick FX</h3>
-
-      <div class="qe-row">
-        <label>Brightness</label>
-        <input type="range" id="qeBrightness" min="-0.5" max="0.5" step="0.01" value="0">
+      <h3>Quick Effects</h3>
+      <div id="quickEffects">
+        <p style="font-size:11px; color:#aaa;">No layer selected</p>
       </div>
-
-      <div class="qe-row">
-        <label>Saturation</label>
-        <input type="range" id="qeSaturation" min="-0.5" max="0.5" step="0.01" value="0">
-      </div>
-
-      <div class="qe-row">
-        <label>Hue</label>
-        <input type="range" id="qeHue" min="-1.0" max="1.0" step="0.01" value="0">
-      </div>
-
-      <div class="qe-row">
-        <label>Wobble</label>
-        <input type="range" id="qeWobble" min="0" max="1" step="0.01" value="0">
-      </div>
-
     </div>
   </div>
 
-  <!-- BOTTOM: Inspector + Global -->
+  <!-- BOTTOM PANEL: INSPECTOR + GLOBAL CONTROLS -->
   <div id="inspectorPanel">
     <div id="inspectorColumns">
-
+      <!-- LEFT SIDE: PER-LAYER INSPECTOR -->
       <div id="inspectorLeft">
         <h2>Inspector</h2>
-        <div id="inspectorContent">Select a layer.</div>
+        <div id="inspectorContent">
+          <p>No layer selected</p>
+        </div>
       </div>
 
+      <!-- RIGHT SIDE: GLOBAL CONTROLS -->
       <div id="inspectorRight">
         <h2>Global</h2>
 
         <div class="global-group">
-          <h3>Logo Text</h3>
-          <input type="text" id="logoText" placeholder="Artist / Track Name">
+          <h3>Brightness & Audio React</h3>
+          <div class="global-row">
+            <div class="global-col">
+              <label for="brightness">Brightness</label>
+              <input
+                type="range"
+                id="brightness"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+              />
+            </div>
+            <div class="global-col">
+              <label for="audioReact">Audio React</label>
+              <input
+                type="range"
+                id="audioReact"
+                min="0"
+                max="2"
+                step="0.01"
+                value="1"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="global-group">
-          <h3>Tempo</h3>
-          <button id="tapTempoBtn">Tap Tempo</button>
-          <span id="bpmDisplay">BPM: --</span>
+          <h3>Camera</h3>
+          <div class="global-row">
+            <div class="global-col">
+              <label for="cameraZoom">Zoom</label>
+              <input
+                type="range"
+                id="cameraZoom"
+                min="0.3"
+                max="2"
+                step="0.01"
+                value="1"
+              />
+            </div>
+            <div class="global-col">
+              <label for="cameraRotate">Rotation (°)</label>
+              <input
+                type="range"
+                id="cameraRotate"
+                min="-180"
+                max="180"
+                step="1"
+                value="0"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="global-group">
+          <h3>Logo / Text</h3>
+          <div class="global-row">
+            <div class="global-col">
+              <label for="logoTextInput">Logo Text</label>
+              <input type="text" id="logoTextInput" value="Your Logo" />
+            </div>
+            <div class="global-col">
+              <label for="logoSize">Text Size</label>
+              <input
+                type="range"
+                id="logoSize"
+                min="10"
+                max="48"
+                step="1"
+                value="18"
+              />
+            </div>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="logoVisible" checked />
+            Show Logo
+          </label>
+        </div>
+
+        <div class="global-group">
+          <h3>Mood / Genre</h3>
+          <select id="moodSelect">
+            <option value="">-- Select mood / genre --</option>
+            <option value="chill">Chill / Ambient</option>
+            <option value="edm">Peak EDM / Festival</option>
+            <option value="dubstep">Dubstep / Heavy Bass</option>
+            <option value="techno">Techno / Minimal</option>
+            <option value="lofi">Lofi / Soft Pastel</option>
+            <option value="psy">Psytrance / Hypno</option>
+          </select>
+        </div>
+
+        <div class="global-group">
+          <h3>Tempo / Beat</h3>
+          <div id="tempoControls">
+            <button id="tapTempoBtn">Tap Tempo</button>
+            <span id="bpmDisplay">-- BPM</span>
+          </div>
+        </div>
+
+        <div class="global-group">
+          <h3>Auto Scene Switch</h3>
+          <label class="checkbox-row">
+            <input type="checkbox" id="autoSwitchEnabled" />
+            Enable Auto Switch
+          </label>
+          <label for="autoSwitchInterval">Interval (seconds)</label>
+          <input
+            type="range"
+            id="autoSwitchInterval"
+            min="5"
+            max="60"
+            step="1"
+            value="20"
+          />
         </div>
 
         <div class="global-group">
           <h3>Presets</h3>
-          <input type="text" id="presetName" placeholder="Preset Name">
-          <div class="preset-buttons">
+          <div id="presetControls">
+            <input type="text" id="presetName" placeholder="Preset name" />
             <button id="savePresetBtn">Save</button>
+          </div>
+          <select id="presetSelect">
+            <option value="">-- Select preset --</option>
+          </select>
+          <div class="preset-buttons">
             <button id="loadPresetBtn">Load</button>
             <button id="deletePresetBtn">Delete</button>
           </div>
