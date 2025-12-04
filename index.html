@@ -2,21 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Music Visualizer</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Music Visualizer UI</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="layout">
 
-  <!-- LEFT PANEL: LAYERS -->
+  <!-- LEFT: Layers -->
   <div id="layersPanel">
     <h2>Layers</h2>
     <div id="layerContainer"></div>
     <button id="addLayerBtn">+ Add Layer</button>
   </div>
 
-  <!-- CENTER: STAGE -->
+  <!-- CENTER: Stage -->
   <div id="stageWrapper">
     <canvas id="stage"></canvas>
     <div id="overlayHud">
@@ -24,89 +24,75 @@
     </div>
   </div>
 
-  <!-- RIGHT PANEL: MEDIA + QUICK FX -->
+  <!-- RIGHT: Media / Clips -->
   <div id="deckPanel">
-    <h2>Media & FX</h2>
+    <h2>Media & Effects</h2>
 
     <div class="section">
-      <span class="field-label">Audio File</span>
-      <input type="file" id="audioFileInput" accept="audio/*" />
+      <label class="field-label">Audio File</label>
+      <input type="file" id="audioFileInput" accept="audio/*">
       <audio id="audioPlayer" controls></audio>
     </div>
 
     <div class="section">
-      <h3>Deck Clips</h3>
-      <div id="deckGrid">
-        <!-- Deck items populated by JS -->
-      </div>
+      <h3>Shading Clips</h3>
+      <div id="deckGrid"></div>
     </div>
 
     <div class="section">
-      <h3>Quick Effects</h3>
-      <div id="quickEffects">
-        <h4>Selected Layer FX</h4>
+      <h3>Quick FX</h3>
 
-        <div class="qe-row">
-          <label>Brightness</label>
-          <input type="range" id="qeBrightness" min="-0.5" max="0.5" step="0.01" value="0" />
-        </div>
-
-        <div class="qe-row">
-          <label>Saturation</label>
-          <input type="range" id="qeSaturation" min="-0.5" max="0.5" step="0.01" value="0" />
-        </div>
-
-        <div class="qe-row">
-          <label>Hue Offset</label>
-          <input type="range" id="qeHue" min="-1.0" max="1.0" step="0.01" value="0" />
-        </div>
-
-        <div class="qe-row">
-          <label>Wobble Amount</label>
-          <input type="range" id="qeWobble" min="0" max="1" step="0.01" value="0" />
-        </div>
+      <div class="qe-row">
+        <label>Brightness</label>
+        <input type="range" id="qeBrightness" min="-0.5" max="0.5" step="0.01" value="0">
       </div>
-    </div>
 
+      <div class="qe-row">
+        <label>Saturation</label>
+        <input type="range" id="qeSaturation" min="-0.5" max="0.5" step="0.01" value="0">
+      </div>
+
+      <div class="qe-row">
+        <label>Hue</label>
+        <input type="range" id="qeHue" min="-1.0" max="1.0" step="0.01" value="0">
+      </div>
+
+      <div class="qe-row">
+        <label>Wobble</label>
+        <input type="range" id="qeWobble" min="0" max="1" step="0.01" value="0">
+      </div>
+
+    </div>
   </div>
 
-  <!-- BOTTOM: INSPECTOR + GLOBAL -->
+  <!-- BOTTOM: Inspector + Global -->
   <div id="inspectorPanel">
     <div id="inspectorColumns">
+
       <div id="inspectorLeft">
-        <h2>Layer Inspector</h2>
-        <div id="inspectorContent">
-          <!-- Populated by JS -->
-        </div>
+        <h2>Inspector</h2>
+        <div id="inspectorContent">Select a layer.</div>
       </div>
 
       <div id="inspectorRight">
-        <h2>Global Controls</h2>
+        <h2>Global</h2>
 
         <div class="global-group">
-          <h3>Logo / Overlay Text</h3>
-          <div class="global-col">
-            <label class="field-label">Logo / Text</label>
-            <input type="text" id="logoText" placeholder="Enter artist / track name" />
-          </div>
+          <h3>Logo Text</h3>
+          <input type="text" id="logoText" placeholder="Artist / Track Name">
         </div>
 
         <div class="global-group">
-          <h3>Tempo / BPM</h3>
-          <div id="tempoControls">
-            <button id="tapTempoBtn">Tap Tempo</button>
-            <span id="bpmDisplay">BPM: --</span>
-          </div>
+          <h3>Tempo</h3>
+          <button id="tapTempoBtn">Tap Tempo</button>
+          <span id="bpmDisplay">BPM: --</span>
         </div>
 
         <div class="global-group">
           <h3>Presets</h3>
-          <div id="presetControls">
-            <input type="text" id="presetName" placeholder="Preset name" />
-            <button id="savePresetBtn">Save</button>
-          </div>
-
+          <input type="text" id="presetName" placeholder="Preset Name">
           <div class="preset-buttons">
+            <button id="savePresetBtn">Save</button>
             <button id="loadPresetBtn">Load</button>
             <button id="deletePresetBtn">Delete</button>
           </div>
