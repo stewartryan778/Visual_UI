@@ -395,8 +395,14 @@ button:hover {
   gap: 6px;
 }
 
+/* 👇 important so the content inside can scroll */
+#inspectorLeft {
+  min-height: 0;
+}
+
 #inspectorContent {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -512,6 +518,31 @@ button:hover {
 .qe-row label {
   font-size: 11px;
   margin-bottom: 2px;
+}
+
+/* Quick visual buttons on right panel */
+.qe-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.qe-quick-btn {
+  font-size: 10px;
+  padding: 3px 4px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.qe-quick-btn.active {
+  border-color: #ffd57a;
+  box-shadow: 0 0 8px rgba(255, 213, 122, 0.8);
+  background: linear-gradient(135deg, #ffd57a, #a36b1b);
+  color: #141414;
 }
 
 /* Layer Mutes */
