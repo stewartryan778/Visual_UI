@@ -14,7 +14,7 @@ window.addEventListener("DOMContentLoaded", () => {
       this.source = null;
       this.type = "shader";
       this.kind = "shader";  // "shader" = background/fullscreen, "object" = overlay object
-      this.visualMode = 0;   // 0..11
+      this.visualMode = 0;   // 0..14
       this.colorTheme = 0;   // 0..7
       this.offsetX = 0.0;
       this.offsetY = 0.0;
@@ -424,6 +424,9 @@ window.addEventListener("DOMContentLoaded", () => {
       case 9: return "Horizon";
       case 10: return "Laser Web";
       case 11: return "Rings";
+      case 12: return "Orb";
+      case 13: return "Corners";
+      case 14: return "Halo";
       default: return "FX";
     }
   }
@@ -572,6 +575,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 <option value="9" ${layer.visualMode === 9 ? "selected" : ""}>Horizon Lines</option>
                 <option value="10" ${layer.visualMode === 10 ? "selected" : ""}>Laser Web</option>
                 <option value="11" ${layer.visualMode === 11 ? "selected" : ""}>Rings + Bloom</option>
+                <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb Pulse (Object)</option>
+                <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corner Flares (Object)</option>
+                <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo Ring (Object)</option>
               </select>
             </div>
 
@@ -729,6 +735,9 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="9" ${layer.visualMode === 9 ? "selected" : ""}>Horizon</option>
           <option value="10" ${layer.visualMode === 10 ? "selected" : ""}>Laser Web</option>
           <option value="11" ${layer.visualMode === 11 ? "selected" : ""}>Rings</option>
+          <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb</option>
+          <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corners</option>
+          <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo</option>
         </select>
       </div>
       <div class="qe-row">
@@ -1121,7 +1130,7 @@ window.addEventListener("DOMContentLoaded", () => {
         vec3 baseCol = palette(tt, A, B, C, D);
         fx = baseCol * web * (0.6 + u_high * 1.4);
 
-      } else {
+      } else if (u_mode < 11.5) {
         // 11: Rings + Bloom (big pulses, background-friendly)
         float wave = sin(r * 16.0 - t * (3.0 + u_bass * 5.0));
         float ring = 0.5 + 0.5 * wave;
@@ -1130,6 +1139,39 @@ window.addEventListener("DOMContentLoaded", () => {
         float tt = r + t * 0.15 + u_mid * 0.4;
         vec3 baseCol = palette(tt, A, B, C, D);
         fx = baseCol * (0.4 + bloom * 2.0);
+
+      } else if (u_mode < 12.5) {
+        // 12: Orb Pulse (center object)
+        float d = length(p);
+        float orbMask = smoothstep(0.45, 0.0, d);
+        float wave = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 5.0) + d * 8.0);
+        float tt = t * 0.4 + u_mid * 0.6;
+        vec3 col = palette(tt, A, B, C, D);
+        fx = col * orbMask * wave * (0.8 + u_high * 0.6);
+
+      } else if (u_mode < 13.5) {
+        // 13: Corner Flares (four small objects in corners)
+        vec2 q = p * 1.4;
+        float c1 = smoothstep(0.6, 0.0, length(q - vec2( 0.9,  0.6)));
+        float c2 = smoothstep(0.6, 0.0, length(q - vec2(-0.9,  0.6)));
+        float c3 = smoothstep(0.6, 0.0, length(q - vec2( 0.9, -0.6)));
+        float c4 = smoothstep(0.6, 0.0, length(q - vec2(-0.9, -0.6)));
+        float mask = clamp(c1 + c2 + c3 + c4, 0.0, 1.0);
+        float tw = 0.5 + 0.5 * sin(t * (3.0 + u_high * 8.0));
+        float tt = t * 0.3 + u_bass * 0.5 + u_high * 0.5;
+        vec3 col = palette(tt, A, B, C, D);
+        fx = col * mask * tw * (0.9 + u_high * 0.8);
+
+      } else {
+        // 14: Halo Ring (object halo)
+        float innerR = 0.35;
+        float outerR = 0.52;
+        float band = smoothstep(innerR, innerR + 0.05, r) *
+                     (1.0 - smoothstep(outerR - 0.05, outerR, r));
+        float wob = 0.5 + 0.5 * sin(t * (2.5 + u_bass * 6.0) + ang * 6.0);
+        float tt = t * 0.25 + u_mid * 0.4 + u_bass * 0.3;
+        vec3 col = palette(tt, A, B, C, D);
+        fx = col * band * wob * (0.8 + u_high * 0.7);
       }
 
       float vignette = smoothstep(0.9, 0.3, r);
