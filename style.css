@@ -80,6 +80,8 @@ body {
 #inspectorPanel {
   grid-area: inspector;
   padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Titles */
@@ -269,7 +271,7 @@ h4 {
   box-shadow: 0 0 18px rgba(255, 213, 122, 0.9);
 }
 
-/* Sections / controls (common) */
+/* General controls */
 
 .section {
   border-radius: 10px;
@@ -279,20 +281,12 @@ h4 {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.subsection {
-  margin-top: 6px;
-  padding-top: 4px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
-}
-
 .field-label {
   font-size: 11px;
   margin-bottom: 2px;
   display: inline-block;
   color: #dde4f4;
 }
-
-/* Inputs */
 
 input[type="range"] {
   width: 100%;
@@ -332,7 +326,7 @@ button:hover {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
 
-/* Master pause button special */
+/* Master pause button */
 
 #masterPauseBtn {
   width: 100%;
@@ -375,13 +369,15 @@ button:hover {
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-/* Inspector bottom panel */
+/* Inspector bottom panel layout */
 
 #inspectorColumns {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
   gap: 10px;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 6px;
 }
 
 #inspectorLeft,
@@ -395,7 +391,7 @@ button:hover {
   gap: 6px;
 }
 
-/* 👇 important so the content inside can scroll */
+/* Key: this allows the inner inspector content to scroll */
 #inspectorLeft {
   min-height: 0;
 }
@@ -433,7 +429,7 @@ button:hover {
   margin-top: 4px;
 }
 
-/* Inspector control rows */
+/* Inspector detail rows */
 
 .inspector-group {
   font-size: 12px;
@@ -492,12 +488,6 @@ button:hover {
 }
 
 #presetControls {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.preset-buttons {
   display: flex;
   gap: 6px;
   margin-top: 4px;
