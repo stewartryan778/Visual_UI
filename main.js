@@ -14,13 +14,12 @@ window.addEventListener("DOMContentLoaded", () => {
       this.source = null;
       this.type = "shader";
       this.kind = "shader";  // "shader" = background/fullscreen, "object" = overlay object
-      this.visualMode = 0;   // 0..17
+      this.visualMode = 0;   // 0..14
       this.colorTheme = 0;   // 0..7
       this.offsetX = 0.0;
       this.offsetY = 0.0;
       this.audioPositionReact = false;
       this.strobeIntensity = 0.0; // 0..1
-      this.timeOffset = 0.0;      // seconds of phase shift
     }
   }
 
@@ -56,17 +55,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const autoSwitchEnabledCheckbox = document.getElementById("autoSwitchEnabled");
   const autoSwitchIntervalSlider = document.getElementById("autoSwitchInterval");
 
+  // Right panel performance controls
   const macroEnergySlider = document.getElementById("macroEnergy");
   const macroMotionSlider = document.getElementById("macroMotion");
   const macroDetailSlider = document.getElementById("macroDetail");
   const layerMuteRow = document.getElementById("layerMuteRow");
-
-  const masterPauseBtn = document.getElementById("masterPauseBtn");
-
-  const objectSceneSelect = document.getElementById("objectSceneSelect");
-  const applyObjectSceneBtn = document.getElementById("applyObjectSceneBtn");
-
-  const colorShiftSlider = document.getElementById("colorShift");
 
   if (!layerContainer || !addLayerBtn || !inspectorContent || !brightnessControl) {
     console.error("Missing key DOM elements. Check IDs in index.html.");
@@ -81,6 +74,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.7,
       cameraZoom: 1.1,
       cameraRotateDeg: 0,
+      // Soft clouds + rings + pixel for BG, orbit as optional object
       layerVisualModes: [8, 11, 4, 5],
       layerColorThemes: [4, 0, 7],
       layerBlends: ["normal", "screen", "screen", "add"]
@@ -91,6 +85,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.7,
       cameraZoom: 0.85,
       cameraRotateDeg: 8,
+      // Bars + laser web + orbit + rings
       layerVisualModes: [6, 10, 5, 11],
       layerColorThemes: [2, 3, 6],
       layerBlends: ["add", "screen", "add", "screen"]
@@ -101,6 +96,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.9,
       cameraZoom: 0.9,
       cameraRotateDeg: -10,
+      // Swirl + bars + stars + laser web
       layerVisualModes: [2, 6, 7, 10],
       layerColorThemes: [5, 2, 6],
       layerBlends: ["add", "add", "screen", "add"]
@@ -111,6 +107,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.0,
       cameraZoom: 1.0,
       cameraRotateDeg: 0,
+      // Tunnel + horizon + kaleido grid
       layerVisualModes: [3, 9, 1],
       layerColorThemes: [3, 6, 0],
       layerBlends: ["normal", "screen", "multiply"]
@@ -121,6 +118,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 0.6,
       cameraZoom: 1.2,
       cameraRotateDeg: 0,
+      // Pixel + clouds + rings, pastel themes
       layerVisualModes: [4, 8, 11],
       layerColorThemes: [7, 4, 0],
       layerBlends: ["normal", "screen", "screen"]
@@ -131,6 +129,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioReact: 1.5,
       cameraZoom: 0.95,
       cameraRotateDeg: 20,
+      // Kaleido + swirl + laser web + starfield
       layerVisualModes: [1, 2, 10, 7],
       layerColorThemes: [2, 7, 3, 6],
       layerBlends: ["add", "screen", "add", "screen"]
@@ -219,8 +218,7 @@ window.addEventListener("DOMContentLoaded", () => {
         offsetX: l.offsetX,
         offsetY: l.offsetY,
         audioPositionReact: l.audioPositionReact,
-        strobeIntensity: l.strobeIntensity,
-        timeOffset: l.timeOffset
+        strobeIntensity: l.strobeIntensity
       }))
     };
   }
@@ -255,7 +253,6 @@ window.addEventListener("DOMContentLoaded", () => {
       l.offsetY = pl.offsetY ?? 0;
       l.audioPositionReact = !!pl.audioPositionReact;
       l.strobeIntensity = pl.strobeIntensity ?? 0;
-      l.timeOffset = pl.timeOffset ?? 0;
       layers.push(l);
     });
 
@@ -411,29 +408,6 @@ window.addEventListener("DOMContentLoaded", () => {
     macroDetail = parseFloat(macroDetailSlider.value || "0.5");
   });
 
-  // Color shift (global phase)
-  let colorShift = parseFloat(colorShiftSlider.value || "0");
-  colorShiftSlider.addEventListener("input", () => {
-    colorShift = parseFloat(colorShiftSlider.value || "0");
-  });
-
-  // Master pause
-  let isPaused = false;
-
-  masterPauseBtn.addEventListener("click", () => {
-    isPaused = !isPaused;
-    masterPauseBtn.textContent = isPaused ? "Play" : "Pause";
-    if (isPaused) {
-      audioPlayer.pause();
-    } else {
-      if (audioContext.state !== "running") {
-        audioContext.resume();
-      }
-      audioPlayer.play().catch(() => {});
-      render(); // restart render loop
-    }
-  });
-
   // ----- Layer UI helpers -----
 
   function visualModeName(mode) {
@@ -453,9 +427,6 @@ window.addEventListener("DOMContentLoaded", () => {
       case 12: return "Orb";
       case 13: return "Corners";
       case 14: return "Halo";
-      case 15: return "Cross";
-      case 16: return "Polygon";
-      case 17: return "Particles";
       default: return "FX";
     }
   }
@@ -607,9 +578,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb Pulse (Object)</option>
                 <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corner Flares (Object)</option>
                 <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo Ring (Object)</option>
-                <option value="15" ${layer.visualMode === 15 ? "selected" : ""}>Cross Beams (Object)</option>
-                <option value="16" ${layer.visualMode === 16 ? "selected" : ""}>Polygon Spin (Object)</option>
-                <option value="17" ${layer.visualMode === 17 ? "selected" : ""}>Particle Burst (Object)</option>
               </select>
             </div>
 
@@ -680,18 +648,6 @@ window.addEventListener("DOMContentLoaded", () => {
               />
             </div>
 
-            <div class="control-row">
-              <label>Time Offset (sec)</label>
-              <input
-                type="range"
-                id="layerTimeOffset"
-                min="-5"
-                max="5"
-                step="0.1"
-                value="${layer.timeOffset}"
-              />
-            </div>
-
           </div>
         </details>
       </div>
@@ -706,7 +662,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const posYSlider = document.getElementById("layerPosY");
     const audioPosReactCheckbox = document.getElementById("layerAudioPosReact");
     const strobeSlider = document.getElementById("layerStrobe");
-    const timeOffsetSlider = document.getElementById("layerTimeOffset");
 
     kindSelect.addEventListener("change", e => {
       layer.kind = e.target.value;
@@ -750,10 +705,6 @@ window.addEventListener("DOMContentLoaded", () => {
       layer.strobeIntensity = parseFloat(e.target.value);
       updateQuickEffects();
     });
-
-    timeOffsetSlider.addEventListener("input", e => {
-      layer.timeOffset = parseFloat(e.target.value);
-    });
   }
 
   // Quick Effects panel on the right
@@ -769,43 +720,26 @@ window.addEventListener("DOMContentLoaded", () => {
 
     quickEffects.innerHTML = `
       <h4>Layer ${selectedLayer + 1} (${layer.kind === "object" ? "Object" : "BG"})</h4>
-
-      <div class="qe-row">
-        <label>Quick Visuals</label>
-        <div class="qe-quick-grid" id="qeQuickGrid">
-          <button class="qe-quick-btn ${layer.visualMode === 0 ? "active" : ""}"  data-mode="0">Rad</button>
-          <button class="qe-quick-btn ${layer.visualMode === 6 ? "active" : ""}"  data-mode="6">Bars</button>
-          <button class="qe-quick-btn ${layer.visualMode === 10 ? "active" : ""}" data-mode="10">Laser</button>
-          <button class="qe-quick-btn ${layer.visualMode === 8 ? "active" : ""}"  data-mode="8">Clouds</button>
-          <button class="qe-quick-btn ${layer.visualMode === 12 ? "active" : ""}" data-mode="12">Orb</button>
-          <button class="qe-quick-btn ${layer.visualMode === 17 ? "active" : ""}" data-mode="17">Parts</button>
-        </div>
-      </div>
-
       <div class="qe-row">
         <label>Visual Mode</label>
         <select id="qeVisualMode">
-          <option value="0"  ${layer.visualMode === 0  ? "selected" : ""}>Radial</option>
-          <option value="1"  ${layer.visualMode === 1  ? "selected" : ""}>Kaleido</option>
-          <option value="2"  ${layer.visualMode === 2  ? "selected" : ""}>Swirl</option>
-          <option value="3"  ${layer.visualMode === 3  ? "selected" : ""}>Tunnel</option>
-          <option value="4"  ${layer.visualMode === 4  ? "selected" : ""}>Pixel</option>
-          <option value="5"  ${layer.visualMode === 5  ? "selected" : ""}>Orbit</option>
-          <option value="6"  ${layer.visualMode === 6  ? "selected" : ""}>Bars</option>
-          <option value="7"  ${layer.visualMode === 7  ? "selected" : ""}>Stars</option>
-          <option value="8"  ${layer.visualMode === 8  ? "selected" : ""}>Clouds</option>
-          <option value="9"  ${layer.visualMode === 9  ? "selected" : ""}>Horizon</option>
+          <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial</option>
+          <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleido</option>
+          <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl</option>
+          <option value="3" ${layer.visualMode === 3 ? "selected" : ""}>Tunnel</option>
+          <option value="4" ${layer.visualMode === 4 ? "selected" : ""}>Pixel</option>
+          <option value="5" ${layer.visualMode === 5 ? "selected" : ""}>Orbit</option>
+          <option value="6" ${layer.visualMode === 6 ? "selected" : ""}>Bars</option>
+          <option value="7" ${layer.visualMode === 7 ? "selected" : ""}>Stars</option>
+          <option value="8" ${layer.visualMode === 8 ? "selected" : ""}>Clouds</option>
+          <option value="9" ${layer.visualMode === 9 ? "selected" : ""}>Horizon</option>
           <option value="10" ${layer.visualMode === 10 ? "selected" : ""}>Laser Web</option>
           <option value="11" ${layer.visualMode === 11 ? "selected" : ""}>Rings</option>
-          <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb (Obj)</option>
-          <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corners (Obj)</option>
-          <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo (Obj)</option>
-          <option value="15" ${layer.visualMode === 15 ? "selected" : ""}>Cross (Obj)</option>
-          <option value="16" ${layer.visualMode === 16 ? "selected" : ""}>Polygon (Obj)</option>
-          <option value="17" ${layer.visualMode === 17 ? "selected" : ""}>Particles (Obj)</option>
+          <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb</option>
+          <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corners</option>
+          <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo</option>
         </select>
       </div>
-
       <div class="qe-row">
         <label>Color Theme</label>
         <select id="qeColorTheme">
@@ -819,7 +753,6 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
         </select>
       </div>
-
       <div class="qe-row">
         <label>Strobe / Flash</label>
         <input
@@ -841,137 +774,17 @@ window.addEventListener("DOMContentLoaded", () => {
       layer.visualMode = parseInt(e.target.value, 10);
       updateInspector();
       updateLayerUI();
-      updateQuickEffects();
     });
 
     qeTheme.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
       updateInspector();
       updateLayerUI();
-      updateQuickEffects();
     });
 
     qeStrobe.addEventListener("input", e => {
       layer.strobeIntensity = parseFloat(e.target.value);
       updateInspector();
-    });
-
-    const quickButtons = document.querySelectorAll("#qeQuickGrid .qe-quick-btn");
-    quickButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const mode = parseInt(btn.dataset.mode, 10);
-        layer.visualMode = mode;
-        updateInspector();
-        updateLayerUI();
-        updateQuickEffects();
-      });
-    });
-  }
-
-  // ======= OBJECT SCENES (BG + OBJECT COMBOS) ========
-
-  function ensureLayerCount(n) {
-    while (layers.length < n) {
-      layers.push(new Layer());
-    }
-  }
-
-  function applyObjectScene(id) {
-    if (!id) return;
-
-    ensureLayerCount(3);
-
-    const bg1 = layers[0];
-    const bg2 = layers[1];
-    const obj = layers[2];
-
-    // Base defaults
-    bg1.enabled = bg2.enabled = obj.enabled = true;
-    bg1.timeOffset = bg2.timeOffset = obj.timeOffset = 0;
-
-    if (id === "logoHalo") {
-      bg1.kind = "shader";
-      bg1.visualMode = 8;
-      bg1.colorTheme = 4;
-      bg1.blend = "normal";
-      bg1.opacity = 0.9;
-      bg1.offsetX = 0;
-      bg1.offsetY = 0;
-
-      bg2.kind = "shader";
-      bg2.visualMode = 11;
-      bg2.colorTheme = 0;
-      bg2.blend = "screen";
-      bg2.opacity = 0.8;
-      bg2.offsetX = 0;
-      bg2.offsetY = 0;
-      bg2.timeOffset = 1.0;
-
-      obj.kind = "object";
-      obj.visualMode = 14;
-      obj.colorTheme = 2;
-      obj.blend = "add";
-      obj.opacity = 1.0;
-      obj.offsetX = 0;
-      obj.offsetY = 0;
-      obj.strobeIntensity = 0.25;
-      obj.audioPositionReact = true;
-    } else if (id === "cornerSparks") {
-      bg1.kind = "shader";
-      bg1.visualMode = 3;
-      bg1.colorTheme = 6;
-      bg1.blend = "normal";
-      bg1.opacity = 0.9;
-
-      bg2.kind = "shader";
-      bg2.visualMode = 10;
-      bg2.colorTheme = 3;
-      bg2.blend = "screen";
-      bg2.opacity = 0.8;
-      bg2.timeOffset = 0.7;
-
-      obj.kind = "object";
-      obj.visualMode = 13;
-      obj.colorTheme = 1;
-      obj.blend = "add";
-      obj.opacity = 1.0;
-      obj.strobeIntensity = 0.4;
-      obj.audioPositionReact = false;
-    } else if (id === "centerOrb") {
-      bg1.kind = "shader";
-      bg1.visualMode = 8;
-      bg1.colorTheme = 7;
-      bg1.blend = "normal";
-      bg1.opacity = 0.8;
-
-      bg2.kind = "shader";
-      bg2.visualMode = 4;
-      bg2.colorTheme = 0;
-      bg2.blend = "screen";
-      bg2.opacity = 0.7;
-      bg2.timeOffset = -0.5;
-
-      obj.kind = "object";
-      obj.visualMode = 12;
-      obj.colorTheme = 2;
-      obj.blend = "add";
-      obj.opacity = 1.0;
-      obj.offsetX = 0;
-      obj.offsetY = 0;
-      obj.strobeIntensity = 0.2;
-      obj.audioPositionReact = true;
-    }
-
-    selectedLayer = 2;
-    updateLayerUI();
-    updateInspector();
-    updateQuickEffects();
-  }
-
-  if (applyObjectSceneBtn) {
-    applyObjectSceneBtn.addEventListener("click", () => {
-      const id = objectSceneSelect.value;
-      applyObjectScene(id);
     });
   }
 
@@ -1037,7 +850,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const track = tracks[index];
     audioPlayer.src = track.url;
     audioPlayer.load();
-    audioPlayer.play().catch(() => {});
+    audioPlayer.play();
 
     if (audioSource) audioSource.disconnect();
 
@@ -1101,7 +914,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const fragSrc = `
     precision mediump float;
     uniform float u_time;
-    uniform float u_timeOffset;
     uniform vec2  u_resolution;
     uniform float u_bass;
     uniform float u_mid;
@@ -1117,7 +929,6 @@ window.addEventListener("DOMContentLoaded", () => {
     uniform float u_strobe;
     uniform float u_beatPhase;
     uniform float u_kind;   // 0 = shader BG, 1 = object overlay
-    uniform float u_colorShift;
 
     vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b * cos(6.28318 * (c * t + d));
@@ -1142,9 +953,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       float r   = length(p);
       float ang = atan(p.y, p.x);
-
-      float tBase = u_time + u_timeOffset;
-      float t = tBase + u_colorShift * 4.0;
+      float t   = u_time;
 
       vec3 A;
       vec3 B;
@@ -1199,12 +1008,14 @@ window.addEventListener("DOMContentLoaded", () => {
       vec3 fx = vec3(0.0);
 
       if (u_mode < 0.5) {
+        // 0: Radial Waves
         float w = sin(10.0 * r - t * (2.0 + u_bass * 6.0));
         float v = 0.5 + 0.5 * w;
         float pattern = v + 0.25 * sin(ang * 6.0 + t * (1.0 + u_mid * 3.0));
         fx = palette(pattern + u_bass * 0.5, A, B, C, D);
 
       } else if (u_mode < 1.5) {
+        // 1: Kaleido Grid
         vec2 g = p;
         g = abs(g);
         g = fract(g * 4.0);
@@ -1215,6 +1026,7 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol + lines * pulse * 1.5;
 
       } else if (u_mode < 2.5) {
+        // 2: Swirl Orbit
         float swirl = sin(ang * 4.0 + r * 8.0 - t * (1.0 + u_bass * 4.0));
         float ring  = exp(-r * 4.0) * (0.5 + 0.5 * swirl);
         float spark = 0.5 + 0.5 * sin((p.x + p.y) * 30.0 + t * (4.0 + u_high * 10.0));
@@ -1223,24 +1035,27 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
 
       } else if (u_mode < 3.5) {
+        // 3: Tunnel Lines
         vec2 q = p;
         float depth = 1.0 / (0.3 + length(q));
         float stripes = 0.5 + 0.5 * sin((q.y + t * (2.0 + u_bass * 6.0)) * 10.0);
         float rings   = 0.5 + 0.5 * sin((length(q) - t * (1.0 + u_mid * 4.0)) * 8.0);
         float m = mix(stripes, rings, 0.5 + 0.5 * u_high);
-        float tt2 = depth + m + u_bass * 0.6;
-        fx = palette(tt2, A, B, C, D) * depth * 1.8;
+        float tt = depth + m + u_bass * 0.6;
+        fx = palette(tt, A, B, C, D) * depth * 1.8;
 
       } else if (u_mode < 4.5) {
+        // 4: Pixel Mosaic
         float scale = 30.0 + u_high * 40.0;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 pix = floor((uv * aspect) * scale) / scale;
         float cell = sin((pix.x + pix.y) * 20.0 + t * (3.0 + u_mid * 5.0));
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0));
-        float tt2 = cell + pulse * 0.3 + u_bass * 0.5;
-        fx = palette(tt2, A, B, C, D);
+        float tt = cell + pulse * 0.3 + u_bass * 0.5;
+        fx = palette(tt, A, B, C, D);
 
       } else if (u_mode < 5.5) {
+        // 5: Orbital Objects
         vec2 q = p;
         float accum = 0.0;
         for (float i = 0.0; i < 5.0; i += 1.0) {
@@ -1256,6 +1071,7 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol * accum * (0.6 + u_bass * 1.6);
 
       } else if (u_mode < 6.5) {
+        // 6: Audio Bars
         vec2 uv2 = uv;
         float bands = 32.0;
         float bandIndex = floor(uv2.x * bands);
@@ -1264,11 +1080,12 @@ window.addEventListener("DOMContentLoaded", () => {
         float barMask = step(uv2.y, amp);
         float border = smoothstep(amp, amp - 0.03, uv2.y);
         float glow = barMask * (0.35 + 0.65 * border);
-        float tt2 = xNorm + t * 0.2 + u_high * 0.3;
-        vec3 barColor = palette(tt2, A, B, C, D);
+        float tt = xNorm + t * 0.2 + u_high * 0.3;
+        vec3 barColor = palette(tt, A, B, C, D);
         fx = barColor * glow * 1.8;
 
       } else if (u_mode < 7.5) {
+        // 7: Starfield (overlay-friendly)
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 grid = (uv * aspect) * 40.0;
         vec2 cell = floor(grid);
@@ -1284,50 +1101,56 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = starCol * energy * gate;
 
       } else if (u_mode < 8.5) {
+        // 8: Soft Clouds (ambient background)
         vec2 q = p * 1.2;
         float n1 = sin(q.x * 3.0 + t * 0.4) * sin(q.y * 2.7 - t * 0.3);
         float n2 = sin(q.x * 5.3 - t * 0.2) * cos(q.y * 4.1 + t * 0.35);
         float n = (n1 + n2) * 0.25;
-        float tt2 = n + u_bass * 0.3 + u_mid * 0.2;
-        fx = palette(tt2, A, B, C, D) * 0.7;
+        float tt = n + u_bass * 0.3 + u_mid * 0.2;
+        fx = palette(tt, A, B, C, D) * 0.7;
 
       } else if (u_mode < 9.5) {
+        // 9: Horizon Lines (rolling techno-ish)
         float horizon = uv.y;
         float base = smoothstep(0.0, 0.3, horizon);
         float scan = sin((horizon * 40.0 - t * (3.0 + u_mid * 6.0)));
         float strip = 0.5 + 0.5 * scan;
-        float tt2 = horizon + t * 0.1 + u_bass * 0.4;
-        vec3 baseCol = palette(tt2, A, B, C, D);
+        float tt = horizon + t * 0.1 + u_bass * 0.4;
+        vec3 baseCol = palette(tt, A, B, C, D);
         fx = baseCol * (base + strip * 0.6);
 
       } else if (u_mode < 10.5) {
+        // 10: Laser Web (high-energy overlay)
         vec2 q = p * 1.4;
         float l1 = abs(sin(q.x * 12.0 + t * (4.0 + u_high * 8.0)));
         float l2 = abs(sin((q.y + q.x) * 10.0 - t * (3.0 + u_mid * 6.0)));
         float l3 = abs(sin((q.y - q.x) * 14.0 + t * (2.0 + u_bass * 4.0)));
         float web = pow(1.0 - min(min(l1, l2), l3), 2.0);
-        float tt2 = t * 0.3 + u_high * 0.8;
-        vec3 baseCol = palette(tt2, A, B, C, D);
+        float tt = t * 0.3 + u_high * 0.8;
+        vec3 baseCol = palette(tt, A, B, C, D);
         fx = baseCol * web * (0.6 + u_high * 1.4);
 
       } else if (u_mode < 11.5) {
+        // 11: Rings + Bloom (big pulses, background-friendly)
         float wave = sin(r * 16.0 - t * (3.0 + u_bass * 5.0));
         float ring = 0.5 + 0.5 * wave;
         float falloff = exp(-r * 3.0);
         float bloom = ring * falloff;
-        float tt2 = r + t * 0.15 + u_mid * 0.4;
-        vec3 baseCol = palette(tt2, A, B, C, D);
+        float tt = r + t * 0.15 + u_mid * 0.4;
+        vec3 baseCol = palette(tt, A, B, C, D);
         fx = baseCol * (0.4 + bloom * 2.0);
 
       } else if (u_mode < 12.5) {
+        // 12: Orb Pulse (center object)
         float d = length(p);
         float orbMask = smoothstep(0.45, 0.0, d);
         float wave = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 5.0) + d * 8.0);
-        float tt2 = t * 0.4 + u_mid * 0.6;
-        vec3 col = palette(tt2, A, B, C, D);
+        float tt = t * 0.4 + u_mid * 0.6;
+        vec3 col = palette(tt, A, B, C, D);
         fx = col * orbMask * wave * (0.8 + u_high * 0.6);
 
       } else if (u_mode < 13.5) {
+        // 13: Corner Flares (four small objects in corners)
         vec2 q = p * 1.4;
         float c1 = smoothstep(0.6, 0.0, length(q - vec2( 0.9,  0.6)));
         float c2 = smoothstep(0.6, 0.0, length(q - vec2(-0.9,  0.6)));
@@ -1335,66 +1158,20 @@ window.addEventListener("DOMContentLoaded", () => {
         float c4 = smoothstep(0.6, 0.0, length(q - vec2(-0.9, -0.6)));
         float mask = clamp(c1 + c2 + c3 + c4, 0.0, 1.0);
         float tw = 0.5 + 0.5 * sin(t * (3.0 + u_high * 8.0));
-        float tt2 = t * 0.3 + u_bass * 0.5 + u_high * 0.5;
-        vec3 col = palette(tt2, A, B, C, D);
+        float tt = t * 0.3 + u_bass * 0.5 + u_high * 0.5;
+        vec3 col = palette(tt, A, B, C, D);
         fx = col * mask * tw * (0.9 + u_high * 0.8);
 
-      } else if (u_mode < 14.5) {
+      } else {
+        // 14: Halo Ring (object halo)
         float innerR = 0.35;
         float outerR = 0.52;
         float band = smoothstep(innerR, innerR + 0.05, r) *
                      (1.0 - smoothstep(outerR - 0.05, outerR, r));
         float wob = 0.5 + 0.5 * sin(t * (2.5 + u_bass * 6.0) + ang * 6.0);
-        float tt2 = t * 0.25 + u_mid * 0.4 + u_bass * 0.3;
-        vec3 col = palette(tt2, A, B, C, D);
+        float tt = t * 0.25 + u_mid * 0.4 + u_bass * 0.3;
+        vec3 col = palette(tt, A, B, C, D);
         fx = col * band * wob * (0.8 + u_high * 0.7);
-
-      } else if (u_mode < 15.5) {
-        vec2 q = p * 1.2;
-        float v1 = smoothstep(0.3, 0.0, abs(q.x) + 0.02);
-        float v2 = smoothstep(0.3, 0.0, abs(q.y) + 0.02);
-        float diag1 = smoothstep(0.35, 0.0, abs(q.x + q.y));
-        float diag2 = smoothstep(0.35, 0.0, abs(q.x - q.y));
-        float beam = v1 + v2 + 0.7 * (diag1 + diag2);
-        beam = clamp(beam, 0.0, 1.0);
-        float tw = 0.5 + 0.5 * sin(t * (4.0 + u_high * 10.0));
-        float tt2 = t * 0.4 + u_mid * 0.6;
-        vec3 col = palette(tt2, A, B, C, D);
-        fx = col * beam * tw * (0.9 + u_bass * 0.6);
-
-      } else if (u_mode < 16.5) {
-        int sides = 6;
-        float angle = atan(p.y, p.x);
-        float radius = length(p);
-        float seg = float(sides);
-        float a = (angle / (6.28318 / seg));
-        float dEdge = abs(fract(a) - 0.5);
-        float edge = smoothstep(0.45, 0.0, dEdge) * smoothstep(0.7, 0.1, radius);
-        float tw = 0.5 + 0.5 * sin(t * (3.0 + u_mid * 7.0));
-        float tt2 = t * 0.3 + u_high * 0.5;
-        vec3 col = palette(tt2, A, B, C, D);
-        fx = col * edge * tw * (0.9 + u_bass * 0.7);
-
-      } else {
-        vec2 center = vec2(0.0, 0.0);
-        float accum = 0.0;
-        for (float i = 0.0; i < 16.0; i += 1.0) {
-          float fi = i + floor(u_time * 4.0);
-          float seed = fi * 12.345;
-          float angP = fract(seed * 0.123) * 6.28318;
-          float dist = fract(seed * 0.987);
-          float speed = 0.4 + 1.5 * dist + u_bass * 2.0;
-          float radial = (fract(dist + t * speed));
-          vec2 pos = center + vec2(cos(angP), sin(angP)) * radial * 1.2;
-          float d = length(p - pos);
-          float size = 0.15 * (0.3 + u_high * 1.7);
-          float part = smoothstep(size, 0.0, d);
-          accum += part;
-        }
-        accum = clamp(accum, 0.0, 1.0);
-        float tt2 = t * 0.5 + u_high * 0.6;
-        vec3 col = palette(tt2, A, B, C, D);
-        fx = col * accum * (0.8 + u_high * 0.8);
       }
 
       float vignette = smoothstep(0.9, 0.3, r);
@@ -1460,24 +1237,22 @@ window.addEventListener("DOMContentLoaded", () => {
   gl.enableVertexAttribArray(posLoc);
   gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-  const uTimeLoc        = gl.getUniformLocation(program, "u_time");
-  const uTimeOffsetLoc  = gl.getUniformLocation(program, "u_timeOffset");
-  const uResLoc         = gl.getUniformLocation(program, "u_resolution");
-  const uBassLoc        = gl.getUniformLocation(program, "u_bass");
-  const uMidLoc         = gl.getUniformLocation(program, "u_mid");
-  const uHighLoc        = gl.getUniformLocation(program, "u_high");
-  const uBrightLoc      = gl.getUniformLocation(program, "u_brightness");
-  const uOpacityLoc     = gl.getUniformLocation(program, "u_opacity");
-  const uModeLoc        = gl.getUniformLocation(program, "u_mode");
-  const uThemeLoc       = gl.getUniformLocation(program, "u_theme");
-  const uZoomLoc        = gl.getUniformLocation(program, "u_zoom");
-  const uRotateLoc      = gl.getUniformLocation(program, "u_rotate");
-  const uOffsetXLoc     = gl.getUniformLocation(program, "u_offsetX");
-  const uOffsetYLoc     = gl.getUniformLocation(program, "u_offsetY");
-  const uStrobeLoc      = gl.getUniformLocation(program, "u_strobe");
-  const uBeatPhaseLoc   = gl.getUniformLocation(program, "u_beatPhase");
-  const uKindLoc        = gl.getUniformLocation(program, "u_kind");
-  const uColorShiftLoc  = gl.getUniformLocation(program, "u_colorShift");
+  const uTimeLoc      = gl.getUniformLocation(program, "u_time");
+  const uResLoc       = gl.getUniformLocation(program, "u_resolution");
+  const uBassLoc      = gl.getUniformLocation(program, "u_bass");
+  const uMidLoc       = gl.getUniformLocation(program, "u_mid");
+  const uHighLoc      = gl.getUniformLocation(program, "u_high");
+  const uBrightLoc    = gl.getUniformLocation(program, "u_brightness");
+  const uOpacityLoc   = gl.getUniformLocation(program, "u_opacity");
+  const uModeLoc      = gl.getUniformLocation(program, "u_mode");
+  const uThemeLoc     = gl.getUniformLocation(program, "u_theme");
+  const uZoomLoc      = gl.getUniformLocation(program, "u_zoom");
+  const uRotateLoc    = gl.getUniformLocation(program, "u_rotate");
+  const uOffsetXLoc   = gl.getUniformLocation(program, "u_offsetX");
+  const uOffsetYLoc   = gl.getUniformLocation(program, "u_offsetY");
+  const uStrobeLoc    = gl.getUniformLocation(program, "u_strobe");
+  const uBeatPhaseLoc = gl.getUniformLocation(program, "u_beatPhase");
+  const uKindLoc      = gl.getUniformLocation(program, "u_kind");
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -1485,8 +1260,6 @@ window.addEventListener("DOMContentLoaded", () => {
   let startTime = performance.now();
 
   function render() {
-    if (isPaused) return;
-
     resizeCanvas();
 
     const now = performance.now();
@@ -1494,11 +1267,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     let { bass, mid, high } = getBands();
 
-    let ar = parseFloat(audioReactSlider.value || "1");
-    let baseReact = 0.3 + ar * 0.85;
-    let energyFactor = 0.7 + macroEnergy * 0.7;
+    // --- Audio reactivity mapping with soft compression ---
+    let ar = parseFloat(audioReactSlider.value || "1");      // 0–2
+    let baseReact = 0.3 + ar * 0.85;                         // ~0.3–2.0
+    let energyFactor = 0.7 + macroEnergy * 0.7;              // 0.7–1.4
     let reactRaw = baseReact * energyFactor;
-    let react = reactRaw / (1.0 + 0.7 * reactRaw);
+    let react = reactRaw / (1.0 + 0.7 * reactRaw);           // stays ~0–1
 
     let bassR = bass * react;
     let midR  = mid  * react;
@@ -1567,7 +1341,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       gl.uniform1f(uTimeLoc, t);
-      gl.uniform1f(uTimeOffsetLoc, layer.timeOffset || 0);
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
       gl.uniform1f(uBassLoc, bassR);
       gl.uniform1f(uMidLoc, midR);
@@ -1585,7 +1358,6 @@ window.addEventListener("DOMContentLoaded", () => {
       gl.uniform1f(uStrobeLoc, strobeEffective);
       gl.uniform1f(uBeatPhaseLoc, beatPhase);
       gl.uniform1f(uKindLoc, layer.kind === "object" ? 1.0 : 0.0);
-      gl.uniform1f(uColorShiftLoc, colorShift);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
