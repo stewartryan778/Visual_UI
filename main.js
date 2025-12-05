@@ -769,29 +769,43 @@ window.addEventListener("DOMContentLoaded", () => {
 
     quickEffects.innerHTML = `
       <h4>Layer ${selectedLayer + 1} (${layer.kind === "object" ? "Object" : "BG"})</h4>
+
+      <div class="qe-row">
+        <label>Quick Visuals</label>
+        <div class="qe-quick-grid" id="qeQuickGrid">
+          <button class="qe-quick-btn ${layer.visualMode === 0 ? "active" : ""}"  data-mode="0">Rad</button>
+          <button class="qe-quick-btn ${layer.visualMode === 6 ? "active" : ""}"  data-mode="6">Bars</button>
+          <button class="qe-quick-btn ${layer.visualMode === 10 ? "active" : ""}" data-mode="10">Laser</button>
+          <button class="qe-quick-btn ${layer.visualMode === 8 ? "active" : ""}"  data-mode="8">Clouds</button>
+          <button class="qe-quick-btn ${layer.visualMode === 12 ? "active" : ""}" data-mode="12">Orb</button>
+          <button class="qe-quick-btn ${layer.visualMode === 17 ? "active" : ""}" data-mode="17">Parts</button>
+        </div>
+      </div>
+
       <div class="qe-row">
         <label>Visual Mode</label>
         <select id="qeVisualMode">
-          <option value="0" ${layer.visualMode === 0 ? "selected" : ""}>Radial</option>
-          <option value="1" ${layer.visualMode === 1 ? "selected" : ""}>Kaleido</option>
-          <option value="2" ${layer.visualMode === 2 ? "selected" : ""}>Swirl</option>
-          <option value="3" ${layer.visualMode === 3 ? "selected" : ""}>Tunnel</option>
-          <option value="4" ${layer.visualMode === 4 ? "selected" : ""}>Pixel</option>
-          <option value="5" ${layer.visualMode === 5 ? "selected" : ""}>Orbit</option>
-          <option value="6" ${layer.visualMode === 6 ? "selected" : ""}>Bars</option>
-          <option value="7" ${layer.visualMode === 7 ? "selected" : ""}>Stars</option>
-          <option value="8" ${layer.visualMode === 8 ? "selected" : ""}>Clouds</option>
-          <option value="9" ${layer.visualMode === 9 ? "selected" : ""}>Horizon</option>
+          <option value="0"  ${layer.visualMode === 0  ? "selected" : ""}>Radial</option>
+          <option value="1"  ${layer.visualMode === 1  ? "selected" : ""}>Kaleido</option>
+          <option value="2"  ${layer.visualMode === 2  ? "selected" : ""}>Swirl</option>
+          <option value="3"  ${layer.visualMode === 3  ? "selected" : ""}>Tunnel</option>
+          <option value="4"  ${layer.visualMode === 4  ? "selected" : ""}>Pixel</option>
+          <option value="5"  ${layer.visualMode === 5  ? "selected" : ""}>Orbit</option>
+          <option value="6"  ${layer.visualMode === 6  ? "selected" : ""}>Bars</option>
+          <option value="7"  ${layer.visualMode === 7  ? "selected" : ""}>Stars</option>
+          <option value="8"  ${layer.visualMode === 8  ? "selected" : ""}>Clouds</option>
+          <option value="9"  ${layer.visualMode === 9  ? "selected" : ""}>Horizon</option>
           <option value="10" ${layer.visualMode === 10 ? "selected" : ""}>Laser Web</option>
           <option value="11" ${layer.visualMode === 11 ? "selected" : ""}>Rings</option>
-          <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb</option>
-          <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corners</option>
-          <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo</option>
-          <option value="15" ${layer.visualMode === 15 ? "selected" : ""}>Cross</option>
-          <option value="16" ${layer.visualMode === 16 ? "selected" : ""}>Polygon</option>
-          <option value="17" ${layer.visualMode === 17 ? "selected" : ""}>Particles</option>
+          <option value="12" ${layer.visualMode === 12 ? "selected" : ""}>Orb (Obj)</option>
+          <option value="13" ${layer.visualMode === 13 ? "selected" : ""}>Corners (Obj)</option>
+          <option value="14" ${layer.visualMode === 14 ? "selected" : ""}>Halo (Obj)</option>
+          <option value="15" ${layer.visualMode === 15 ? "selected" : ""}>Cross (Obj)</option>
+          <option value="16" ${layer.visualMode === 16 ? "selected" : ""}>Polygon (Obj)</option>
+          <option value="17" ${layer.visualMode === 17 ? "selected" : ""}>Particles (Obj)</option>
         </select>
       </div>
+
       <div class="qe-row">
         <label>Color Theme</label>
         <select id="qeColorTheme">
@@ -805,6 +819,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <option value="7" ${layer.colorTheme === 7 ? "selected" : ""}>Vaporwave</option>
         </select>
       </div>
+
       <div class="qe-row">
         <label>Strobe / Flash</label>
         <input
@@ -826,17 +841,30 @@ window.addEventListener("DOMContentLoaded", () => {
       layer.visualMode = parseInt(e.target.value, 10);
       updateInspector();
       updateLayerUI();
+      updateQuickEffects();
     });
 
     qeTheme.addEventListener("change", e => {
       layer.colorTheme = parseInt(e.target.value, 10);
       updateInspector();
       updateLayerUI();
+      updateQuickEffects();
     });
 
     qeStrobe.addEventListener("input", e => {
       layer.strobeIntensity = parseFloat(e.target.value);
       updateInspector();
+    });
+
+    const quickButtons = document.querySelectorAll("#qeQuickGrid .qe-quick-btn");
+    quickButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = parseInt(btn.dataset.mode, 10);
+        layer.visualMode = mode;
+        updateInspector();
+        updateLayerUI();
+        updateQuickEffects();
+      });
     });
   }
 
@@ -862,18 +890,17 @@ window.addEventListener("DOMContentLoaded", () => {
     bg1.timeOffset = bg2.timeOffset = obj.timeOffset = 0;
 
     if (id === "logoHalo") {
-      // Background soft + rings, halo object for logo
       bg1.kind = "shader";
-      bg1.visualMode = 8;   // Clouds
-      bg1.colorTheme = 4;   // Sunset
+      bg1.visualMode = 8;
+      bg1.colorTheme = 4;
       bg1.blend = "normal";
       bg1.opacity = 0.9;
       bg1.offsetX = 0;
       bg1.offsetY = 0;
 
       bg2.kind = "shader";
-      bg2.visualMode = 11;  // Rings
-      bg2.colorTheme = 0;   // Cool
+      bg2.visualMode = 11;
+      bg2.colorTheme = 0;
       bg2.blend = "screen";
       bg2.opacity = 0.8;
       bg2.offsetX = 0;
@@ -881,8 +908,8 @@ window.addEventListener("DOMContentLoaded", () => {
       bg2.timeOffset = 1.0;
 
       obj.kind = "object";
-      obj.visualMode = 14;  // Halo
-      obj.colorTheme = 2;   // Neon
+      obj.visualMode = 14;
+      obj.colorTheme = 2;
       obj.blend = "add";
       obj.opacity = 1.0;
       obj.offsetX = 0;
@@ -890,45 +917,43 @@ window.addEventListener("DOMContentLoaded", () => {
       obj.strobeIntensity = 0.25;
       obj.audioPositionReact = true;
     } else if (id === "cornerSparks") {
-      // Strong BG + corner flares for impact hits
       bg1.kind = "shader";
-      bg1.visualMode = 3;   // Tunnel
-      bg1.colorTheme = 6;   // Ice
+      bg1.visualMode = 3;
+      bg1.colorTheme = 6;
       bg1.blend = "normal";
       bg1.opacity = 0.9;
 
       bg2.kind = "shader";
-      bg2.visualMode = 10;  // Laser Web
-      bg2.colorTheme = 3;   // Cyber
+      bg2.visualMode = 10;
+      bg2.colorTheme = 3;
       bg2.blend = "screen";
       bg2.opacity = 0.8;
       bg2.timeOffset = 0.7;
 
       obj.kind = "object";
-      obj.visualMode = 13;  // Corners
-      obj.colorTheme = 1;   // Warm
+      obj.visualMode = 13;
+      obj.colorTheme = 1;
       obj.blend = "add";
       obj.opacity = 1.0;
       obj.strobeIntensity = 0.4;
       obj.audioPositionReact = false;
     } else if (id === "centerOrb") {
-      // Simple clean center orb over subtle BG
       bg1.kind = "shader";
-      bg1.visualMode = 8;   // Clouds
-      bg1.colorTheme = 7;   // Vaporwave
+      bg1.visualMode = 8;
+      bg1.colorTheme = 7;
       bg1.blend = "normal";
       bg1.opacity = 0.8;
 
       bg2.kind = "shader";
-      bg2.visualMode = 4;   // Pixel
-      bg2.colorTheme = 0;   // Cool
+      bg2.visualMode = 4;
+      bg2.colorTheme = 0;
       bg2.blend = "screen";
       bg2.opacity = 0.7;
       bg2.timeOffset = -0.5;
 
       obj.kind = "object";
-      obj.visualMode = 12;  // Orb
-      obj.colorTheme = 2;   // Neon
+      obj.visualMode = 12;
+      obj.colorTheme = 2;
       obj.blend = "add";
       obj.opacity = 1.0;
       obj.offsetX = 0;
@@ -937,7 +962,7 @@ window.addEventListener("DOMContentLoaded", () => {
       obj.audioPositionReact = true;
     }
 
-    selectedLayer = 2; // focus object
+    selectedLayer = 2;
     updateLayerUI();
     updateInspector();
     updateQuickEffects();
@@ -1174,14 +1199,12 @@ window.addEventListener("DOMContentLoaded", () => {
       vec3 fx = vec3(0.0);
 
       if (u_mode < 0.5) {
-        // 0: Radial Waves
         float w = sin(10.0 * r - t * (2.0 + u_bass * 6.0));
         float v = 0.5 + 0.5 * w;
         float pattern = v + 0.25 * sin(ang * 6.0 + t * (1.0 + u_mid * 3.0));
         fx = palette(pattern + u_bass * 0.5, A, B, C, D);
 
       } else if (u_mode < 1.5) {
-        // 1: Kaleido Grid
         vec2 g = p;
         g = abs(g);
         g = fract(g * 4.0);
@@ -1192,7 +1215,6 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol + lines * pulse * 1.5;
 
       } else if (u_mode < 2.5) {
-        // 2: Swirl Orbit
         float swirl = sin(ang * 4.0 + r * 8.0 - t * (1.0 + u_bass * 4.0));
         float ring  = exp(-r * 4.0) * (0.5 + 0.5 * swirl);
         float spark = 0.5 + 0.5 * sin((p.x + p.y) * 30.0 + t * (4.0 + u_high * 10.0));
@@ -1201,27 +1223,24 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol * (0.4 + ring * 1.2) * (0.8 + 0.4 * spark);
 
       } else if (u_mode < 3.5) {
-        // 3: Tunnel Lines
         vec2 q = p;
         float depth = 1.0 / (0.3 + length(q));
         float stripes = 0.5 + 0.5 * sin((q.y + t * (2.0 + u_bass * 6.0)) * 10.0);
         float rings   = 0.5 + 0.5 * sin((length(q) - t * (1.0 + u_mid * 4.0)) * 8.0);
         float m = mix(stripes, rings, 0.5 + 0.5 * u_high);
-        float tt = depth + m + u_bass * 0.6;
-        fx = palette(tt, A, B, C, D) * depth * 1.8;
+        float tt2 = depth + m + u_bass * 0.6;
+        fx = palette(tt2, A, B, C, D) * depth * 1.8;
 
       } else if (u_mode < 4.5) {
-        // 4: Pixel Mosaic
         float scale = 30.0 + u_high * 40.0;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 pix = floor((uv * aspect) * scale) / scale;
         float cell = sin((pix.x + pix.y) * 20.0 + t * (3.0 + u_mid * 5.0));
         float pulse = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 8.0));
-        float tt = cell + pulse * 0.3 + u_bass * 0.5;
-        fx = palette(tt, A, B, C, D);
+        float tt2 = cell + pulse * 0.3 + u_bass * 0.5;
+        fx = palette(tt2, A, B, C, D);
 
       } else if (u_mode < 5.5) {
-        // 5: Orbital Objects
         vec2 q = p;
         float accum = 0.0;
         for (float i = 0.0; i < 5.0; i += 1.0) {
@@ -1237,7 +1256,6 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = baseCol * accum * (0.6 + u_bass * 1.6);
 
       } else if (u_mode < 6.5) {
-        // 6: Audio Bars
         vec2 uv2 = uv;
         float bands = 32.0;
         float bandIndex = floor(uv2.x * bands);
@@ -1246,12 +1264,11 @@ window.addEventListener("DOMContentLoaded", () => {
         float barMask = step(uv2.y, amp);
         float border = smoothstep(amp, amp - 0.03, uv2.y);
         float glow = barMask * (0.35 + 0.65 * border);
-        float tt = xNorm + t * 0.2 + u_high * 0.3;
-        vec3 barColor = palette(tt, A, B, C, D);
+        float tt2 = xNorm + t * 0.2 + u_high * 0.3;
+        vec3 barColor = palette(tt2, A, B, C, D);
         fx = barColor * glow * 1.8;
 
       } else if (u_mode < 7.5) {
-        // 7: Starfield (overlay-friendly)
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 grid = (uv * aspect) * 40.0;
         vec2 cell = floor(grid);
@@ -1267,56 +1284,50 @@ window.addEventListener("DOMContentLoaded", () => {
         fx = starCol * energy * gate;
 
       } else if (u_mode < 8.5) {
-        // 8: Soft Clouds (ambient background)
         vec2 q = p * 1.2;
         float n1 = sin(q.x * 3.0 + t * 0.4) * sin(q.y * 2.7 - t * 0.3);
         float n2 = sin(q.x * 5.3 - t * 0.2) * cos(q.y * 4.1 + t * 0.35);
         float n = (n1 + n2) * 0.25;
-        float tt = n + u_bass * 0.3 + u_mid * 0.2;
-        fx = palette(tt, A, B, C, D) * 0.7;
+        float tt2 = n + u_bass * 0.3 + u_mid * 0.2;
+        fx = palette(tt2, A, B, C, D) * 0.7;
 
       } else if (u_mode < 9.5) {
-        // 9: Horizon Lines (rolling techno-ish)
         float horizon = uv.y;
         float base = smoothstep(0.0, 0.3, horizon);
         float scan = sin((horizon * 40.0 - t * (3.0 + u_mid * 6.0)));
         float strip = 0.5 + 0.5 * scan;
-        float tt = horizon + t * 0.1 + u_bass * 0.4;
-        vec3 baseCol = palette(tt, A, B, C, D);
+        float tt2 = horizon + t * 0.1 + u_bass * 0.4;
+        vec3 baseCol = palette(tt2, A, B, C, D);
         fx = baseCol * (base + strip * 0.6);
 
       } else if (u_mode < 10.5) {
-        // 10: Laser Web (high-energy overlay)
         vec2 q = p * 1.4;
         float l1 = abs(sin(q.x * 12.0 + t * (4.0 + u_high * 8.0)));
         float l2 = abs(sin((q.y + q.x) * 10.0 - t * (3.0 + u_mid * 6.0)));
         float l3 = abs(sin((q.y - q.x) * 14.0 + t * (2.0 + u_bass * 4.0)));
         float web = pow(1.0 - min(min(l1, l2), l3), 2.0);
-        float tt = t * 0.3 + u_high * 0.8;
-        vec3 baseCol = palette(tt, A, B, C, D);
+        float tt2 = t * 0.3 + u_high * 0.8;
+        vec3 baseCol = palette(tt2, A, B, C, D);
         fx = baseCol * web * (0.6 + u_high * 1.4);
 
       } else if (u_mode < 11.5) {
-        // 11: Rings + Bloom (big pulses, background-friendly)
         float wave = sin(r * 16.0 - t * (3.0 + u_bass * 5.0));
         float ring = 0.5 + 0.5 * wave;
         float falloff = exp(-r * 3.0);
         float bloom = ring * falloff;
-        float tt = r + t * 0.15 + u_mid * 0.4;
-        vec3 baseCol = palette(tt, A, B, C, D);
+        float tt2 = r + t * 0.15 + u_mid * 0.4;
+        vec3 baseCol = palette(tt2, A, B, C, D);
         fx = baseCol * (0.4 + bloom * 2.0);
 
       } else if (u_mode < 12.5) {
-        // 12: Orb Pulse (center object)
         float d = length(p);
         float orbMask = smoothstep(0.45, 0.0, d);
         float wave = 0.5 + 0.5 * sin(t * (2.0 + u_bass * 5.0) + d * 8.0);
-        float tt = t * 0.4 + u_mid * 0.6;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.4 + u_mid * 0.6;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * orbMask * wave * (0.8 + u_high * 0.6);
 
       } else if (u_mode < 13.5) {
-        // 13: Corner Flares (four small objects in corners)
         vec2 q = p * 1.4;
         float c1 = smoothstep(0.6, 0.0, length(q - vec2( 0.9,  0.6)));
         float c2 = smoothstep(0.6, 0.0, length(q - vec2(-0.9,  0.6)));
@@ -1324,23 +1335,21 @@ window.addEventListener("DOMContentLoaded", () => {
         float c4 = smoothstep(0.6, 0.0, length(q - vec2(-0.9, -0.6)));
         float mask = clamp(c1 + c2 + c3 + c4, 0.0, 1.0);
         float tw = 0.5 + 0.5 * sin(t * (3.0 + u_high * 8.0));
-        float tt = t * 0.3 + u_bass * 0.5 + u_high * 0.5;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.3 + u_bass * 0.5 + u_high * 0.5;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * mask * tw * (0.9 + u_high * 0.8);
 
       } else if (u_mode < 14.5) {
-        // 14: Halo Ring (object halo)
         float innerR = 0.35;
         float outerR = 0.52;
         float band = smoothstep(innerR, innerR + 0.05, r) *
                      (1.0 - smoothstep(outerR - 0.05, outerR, r));
         float wob = 0.5 + 0.5 * sin(t * (2.5 + u_bass * 6.0) + ang * 6.0);
-        float tt = t * 0.25 + u_mid * 0.4 + u_bass * 0.3;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.25 + u_mid * 0.4 + u_bass * 0.3;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * band * wob * (0.8 + u_high * 0.7);
 
       } else if (u_mode < 15.5) {
-        // 15: Cross Beams (object)
         vec2 q = p * 1.2;
         float v1 = smoothstep(0.3, 0.0, abs(q.x) + 0.02);
         float v2 = smoothstep(0.3, 0.0, abs(q.y) + 0.02);
@@ -1349,12 +1358,11 @@ window.addEventListener("DOMContentLoaded", () => {
         float beam = v1 + v2 + 0.7 * (diag1 + diag2);
         beam = clamp(beam, 0.0, 1.0);
         float tw = 0.5 + 0.5 * sin(t * (4.0 + u_high * 10.0));
-        float tt = t * 0.4 + u_mid * 0.6;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.4 + u_mid * 0.6;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * beam * tw * (0.9 + u_bass * 0.6);
 
       } else if (u_mode < 16.5) {
-        // 16: Polygon Spin (object)
         int sides = 6;
         float angle = atan(p.y, p.x);
         float radius = length(p);
@@ -1363,12 +1371,11 @@ window.addEventListener("DOMContentLoaded", () => {
         float dEdge = abs(fract(a) - 0.5);
         float edge = smoothstep(0.45, 0.0, dEdge) * smoothstep(0.7, 0.1, radius);
         float tw = 0.5 + 0.5 * sin(t * (3.0 + u_mid * 7.0));
-        float tt = t * 0.3 + u_high * 0.5;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.3 + u_high * 0.5;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * edge * tw * (0.9 + u_bass * 0.7);
 
       } else {
-        // 17: Particle Burst (object)
         vec2 center = vec2(0.0, 0.0);
         float accum = 0.0;
         for (float i = 0.0; i < 16.0; i += 1.0) {
@@ -1385,8 +1392,8 @@ window.addEventListener("DOMContentLoaded", () => {
           accum += part;
         }
         accum = clamp(accum, 0.0, 1.0);
-        float tt = t * 0.5 + u_high * 0.6;
-        vec3 col = palette(tt, A, B, C, D);
+        float tt2 = t * 0.5 + u_high * 0.6;
+        vec3 col = palette(tt2, A, B, C, D);
         fx = col * accum * (0.8 + u_high * 0.8);
       }
 
@@ -1487,7 +1494,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     let { bass, mid, high } = getBands();
 
-    // --- Audio reactivity mapping with soft compression ---
     let ar = parseFloat(audioReactSlider.value || "1");
     let baseReact = 0.3 + ar * 0.85;
     let energyFactor = 0.7 + macroEnergy * 0.7;
